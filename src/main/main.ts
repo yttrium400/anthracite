@@ -1,7 +1,7 @@
 import { app, BrowserWindow, BrowserView, ipcMain, session } from 'electron'
 import path from 'node:path'
 import { spawn, ChildProcess } from 'node:child_process'
-import { ElectronBlocker } from '@ghostery/adblocker-electron'
+import { ElectronBlocker, Request } from '@ghostery/adblocker-electron'
 import fetch from 'cross-fetch'
 import {
     addHistoryEntry,
@@ -644,6 +644,55 @@ function createWindow(): void {
             if (!removed && cookie.domain && !cookie.domain.startsWith('.')) {
                 console.log(`Cookie set: ${cookie.name} from ${cookie.domain}`)
             }
+        })
+
+        // Aggressive Popup Blocking
+        webContents.setWindowOpenHandler((details) => {
+            const { url, disposition, features } = details
+
+            // Allow if opened by user gesture (often indicated by features or timing)
+            // But strict ad blockers often block even these if the URL matches an ad pattern
+
+            // Check against ad blocker
+            if (blocker && adBlockEnabled) {
+                // Check if the URL is an ad/tracker
+                const request = Request.fromRawDetails({
+                    url: url,
+                    type: 'popup' as any,
+                    requestId: Date.now().toString(), // Dummy ID
+                    sourceUrl: webContents.getURL()
+                })
+
+                const { match } = blocker.match(request)
+
+                if (match) {
+                    console.log(`Blocked popup (ad): ${url}`)
+                    blockedCount++
+                    if (win && !win.isDestroyed()) {
+                        win.webContents.send('ad-blocked', { count: blockedCount, url })
+                    }
+                    return { action: 'deny' }
+                }
+            }
+
+            // If it's a known streaming site popup pattern (often blank or unrelated domain)
+            const currentUrl = webContents.getURL()
+            const isStreamingSite = /footybite|totalsportek|soccerstreams/i.test(currentUrl)
+
+            if (isStreamingSite) {
+                // Block all popups on streaming sites unless explicit whitelist logic (which is hard to determine)
+                // Brave/uBlock often default to denying all popups on these sites
+                console.log(`Blocked popup (streaming site): ${url}`)
+                blockedCount++
+                if (win && !win.isDestroyed()) {
+                    win.webContents.send('ad-blocked', { count: blockedCount, url })
+                }
+                return { action: 'deny' }
+            }
+
+            // Normal behavior: Open in new tab
+            createTab(url)
+            return { action: 'deny' }
         })
     })
 }

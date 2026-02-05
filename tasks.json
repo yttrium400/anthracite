@@ -221,13 +221,13 @@
             "priority": "medium",
             "context": "Suggestions remained open when manually typing a URL/search and pressing Enter, due to late-arriving async fetch results. Fixed by checking input focus before showing results.",
             "created_at": "2024-05-22T12:00:00.000000"
-        }
+        },
         {
             "id": "11",
             "title": "Implement Aggressive Ad & Popup Blocking for Streaming Sites",
-            "status": "pending",
+            "status": "completed",
             "priority": "high",
-            "context": "Block popups and new tabs on streaming sites (football matches) using ad blocker engine logic. Similar to Brave's aggressive blocking.",
+            "context": "Block popups and new tabs on streaming sites (football matches) using ad blocker engine logic. Similar to Brave's aggressive blocking. Intercepts window.open via setWindowOpenHandler.",
             "created_at": "2024-05-22T14:00:00.000000"
         }
     ]
