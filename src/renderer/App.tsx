@@ -15,6 +15,7 @@ interface Tab {
 }
 
 function App() {
+    const [isSidebarPinned, setIsSidebarPinned] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const [tabs, setTabs] = useState<Tab[]>([]);
     const [activeTabId, setActiveTabId] = useState<string | null>(null);
@@ -147,12 +148,15 @@ function App() {
     return (
         <div className="h-screen w-full bg-surface overflow-hidden font-sans flex flex-col">
             {/* Top Navigation Bar */}
-            <TopBar />
+            <TopBar isSidebarPinned={isSidebarPinned} />
 
             {/* Main Content Area */}
-            <main className="flex-1 relative">
+            <main className={cn(
+                "flex-1 relative transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                isSidebarPinned && "ml-[300px]" // 280px sidebar + 20px gap
+            )}>
                 {/* Floating Sidebar - z-index ensures it's above webview */}
-                <Sidebar />
+                <Sidebar onPinnedChange={setIsSidebarPinned} />
 
                 {/* Loading state */}
                 {!isReady ? (

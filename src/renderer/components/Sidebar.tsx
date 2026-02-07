@@ -46,8 +46,8 @@ import type { Realm, Dock as DockType, IconName, ThemeColor } from '../../shared
 
 interface SidebarProps {
     className?: string;
+    onPinnedChange?: (pinned: boolean) => void;
 }
-
 
 interface Tab {
     id: string;
@@ -96,9 +96,14 @@ function LooseTabsDropZone({ looseTabs, activeRealmDocks, children }: LooseTabsD
     );
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, onPinnedChange }: SidebarProps) {
     const [isVisible, setIsVisible] = useState(false);
     const [isPinned, setIsPinned] = useState(false);
+
+    // Sync pinned state with parent
+    useEffect(() => {
+        onPinnedChange?.(isPinned);
+    }, [isPinned, onPinnedChange]);
 
     // Ad blocker state
     const [adBlockEnabled, setAdBlockEnabled] = useState(true);
@@ -1148,8 +1153,8 @@ export function Sidebar({ className }: SidebarProps) {
                                     {dropTarget?.containerId === 'loose' &&
                                         dropTarget?.index === looseTabs.length &&
                                         looseTabs.length > 0 && (
-                                        <li className="h-0.5 mx-2 bg-brand rounded-full" />
-                                    )}
+                                            <li className="h-0.5 mx-2 bg-brand rounded-full" />
+                                        )}
                                 </ul>
                             </SortableContext>
 

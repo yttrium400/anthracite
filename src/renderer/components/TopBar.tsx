@@ -20,6 +20,19 @@ import type { Realm, ThemeColor } from '../../shared/types';
 
 interface TopBarProps {
     className?: string;
+    isSidebarPinned?: boolean;
+}
+
+// ... existing interfaces ...
+
+// ... existing interfaces ...
+
+interface Suggestion {
+    type: 'history' | 'search';
+    url?: string;
+    title: string;
+    favicon?: string;
+    visitCount?: number;
 }
 
 interface ActiveTab {
@@ -30,14 +43,6 @@ interface ActiveTab {
     isLoading: boolean;
     canGoBack: boolean;
     canGoForward: boolean;
-}
-
-interface Suggestion {
-    type: 'history' | 'search';
-    url?: string;
-    title: string;
-    favicon?: string;
-    visitCount?: number;
 }
 
 // Color mappings for realm indicator
@@ -80,7 +85,7 @@ const COLOR_BORDER_MAP: Record<ThemeColor, string> = {
     gray: 'border-gray-500/30',
 };
 
-export function TopBar({ className }: TopBarProps) {
+export function TopBar({ className, isSidebarPinned }: TopBarProps) {
     const [activeTab, setActiveTab] = useState<ActiveTab | null>(null);
     const [inputValue, setInputValue] = useState('');
     const [isFocused, setIsFocused] = useState(false);
@@ -429,6 +434,7 @@ export function TopBar({ className }: TopBarProps) {
     };
 
     // Extract domain for display when not editing
+    // Extract domain for display when not editing
     const getDomain = (url: string) => {
         try {
             const urlObj = new URL(url);
@@ -447,8 +453,13 @@ export function TopBar({ className }: TopBarProps) {
             )}
             style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
-            {/* Traffic Light Spacer (macOS) */}
-            <div className="w-[68px] shrink-0" />
+            {/* Traffic Light Spacer (macOS) - Expands when sidebar is pinned */}
+            <div
+                className={cn(
+                    "shrink-0 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                    isSidebarPinned ? "w-[300px]" : "w-[68px]"
+                )}
+            />
 
             {/* Navigation Buttons */}
             <div
