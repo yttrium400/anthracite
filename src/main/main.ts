@@ -433,38 +433,39 @@ async function initAdBlocker(): Promise<void> {
 
 function toggleAdBlocker(enabled: boolean): void {
     adBlockEnabled = enabled
+    console.log('[AdBlock] Toggling ad blocker:', enabled)
+
     if (blocker) {
-        // Toggle on all tab sessions
-        // We iterate tabs, but they share the same 'persist:poseidon' session.
-        // So we really just need to toggle it on that session once.
-        // Accessing via the first available tab or constructing the session is fine.
+        // Since all tabs use the default session (no partition specified in BrowserView),
+        // we can just toggle it on defaultSession.
+        const sess = session.defaultSession
 
-        // However, since we might have multiple windows/views, iterating is safer to catch all contentSessions.
-        // But we must guard against "disable on not enabled" or "enable on enabled".
-
-        const sessionsProcessed = new Set<string>()
-
-        tabs.forEach(tab => {
-            const sess = tab.view.webContents.session
-            // @ts-ignore - accessing internal id if available, or just use object reference
-            // Actually, we can just check isBlockingEnabled
-
-            if (enabled) {
-                if (!blocker!.isBlockingEnabled(sess)) {
-                    try {
-                        safeEnableBlocking(sess)
-                    } catch (e) { console.error('Error enabling adblock:', e) }
+        if (enabled) {
+            if (!blocker.isBlockingEnabled(sess)) {
+                console.log('[AdBlock] Enabling blocking on default session')
+                safeEnableBlocking(sess)
+            }
+        } else {
+            console.log('[AdBlock] Disabling blocking on default session')
+            if (blocker.isBlockingEnabled(sess)) {
+                // Polyfill unregisterPreloadScript if missing (Electron 28+ removed it)
+                // This prevents the adblocker library from crashing when trying to remove its script
+                // @ts-ignore
+                if (typeof sess.unregisterPreloadScript !== 'function') {
+                    // @ts-ignore
+                    sess.unregisterPreloadScript = () => { }
                 }
-            } else {
-                if (blocker!.isBlockingEnabled(sess)) {
-                    try {
-                        blocker!.disableBlockingInSession(sess)
-                    } catch (e) {
-                        // Ignore "not enabled" error if race condition
-                    }
+
+                try {
+                    blocker.disableBlockingInSession(sess)
+                } catch (e) {
+                    console.error('[AdBlock] Error disabling blocking:', e)
                 }
             }
-        })
+            // Force disable in case isBlockingEnabled is not tracking correctly
+            // This explicitly unregisters the network listener if possible, 
+            // but disableBlockingInSession should handle it.
+        }
     }
 }
 
