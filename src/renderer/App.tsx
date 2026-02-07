@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TopBar } from './components/TopBar';
 import { Sidebar } from './components/Sidebar';
 import { HomePage } from './components/HomePage';
+import { SettingsPage } from './components/SettingsPage';
 import { RealmSearch } from './components/RealmSearch';
 import { cn } from './lib/utils';
 
@@ -22,7 +23,9 @@ function App() {
     const webviewRefs = useRef<Map<string, Electron.WebviewTag>>(new Map());
 
     const activeTab = tabs.find(t => t.id === activeTabId);
-    const isHomePage = activeTab?.url === 'poseidon://newtab' || activeTab?.url.startsWith('poseidon://');
+    const isHomePage = activeTab?.url === 'poseidon://newtab';
+    const isSettingsPage = activeTab?.url === 'poseidon://settings';
+    const isInternalPage = activeTab?.url?.startsWith('poseidon://');
 
     // Keyboard shortcut for Realm Search (Cmd+Shift+K)
     useEffect(() => {
@@ -159,8 +162,11 @@ function App() {
                             <p className="text-sm text-text-tertiary">Loading...</p>
                         </div>
                     </div>
-                ) : isHomePage ? (
-                    /* Home Page - shown when on poseidon://newtab */
+                ) : isSettingsPage ? (
+                    /* Settings Page - shown when on poseidon://settings */
+                    <SettingsPage />
+                ) : isHomePage || isInternalPage ? (
+                    /* Home Page - shown when on poseidon://newtab or other internal pages */
                     <HomePage />
                 ) : (
                     /* Webview Container - renders web content */

@@ -1214,7 +1214,10 @@ export function Sidebar({ className }: SidebarProps) {
                             </div>
                         )}
 
-                        <button className="flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:bg-surface-tertiary hover:text-text-primary transition-all duration-200">
+                        <button
+                            onClick={() => window.electron?.navigation.navigate('poseidon://settings')}
+                            className="flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:bg-surface-tertiary hover:text-text-primary transition-all duration-200"
+                        >
                             <Settings className="h-[18px] w-[18px] shrink-0" />
                             <span>Settings</span>
                         </button>

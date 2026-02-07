@@ -47,6 +47,7 @@ import {
     getAllTabOrganizations,
     closeStore,
 } from './store'
+import { settingsStore, type AppSettings } from './settings'
 import type { ThemeColor, IconName } from '../shared/types'
 
 // ============================================
@@ -607,6 +608,47 @@ function setupIPC(): void {
             console.error('Failed to resolve adblock preload path:', error)
             return ''
         }
+    })
+
+    // Settings
+    ipcMain.handle('get-settings', () => {
+        return settingsStore.getAll()
+    })
+
+    ipcMain.handle('get-setting', (_, key: keyof AppSettings) => {
+        return settingsStore.get(key)
+    })
+
+    ipcMain.handle('set-setting', (_, key: keyof AppSettings, value: any) => {
+        const settings = settingsStore.set(key, value)
+        // Notify renderer of settings change
+        mainWindow?.webContents.send('settings-changed', { key, value, settings })
+
+        // Apply setting immediately if it affects the main process
+        if (key === 'adBlockerEnabled') {
+            toggleAdBlocker(value as boolean)
+        }
+
+        return settings
+    })
+
+    ipcMain.handle('update-settings', (_, updates: Partial<AppSettings>) => {
+        const settings = settingsStore.update(updates)
+        mainWindow?.webContents.send('settings-changed', { settings })
+
+        // Apply ad blocker setting if included
+        if ('adBlockerEnabled' in updates) {
+            toggleAdBlocker(updates.adBlockerEnabled as boolean)
+        }
+
+        return settings
+    })
+
+    ipcMain.handle('reset-settings', () => {
+        const settings = settingsStore.reset()
+        mainWindow?.webContents.send('settings-changed', { settings })
+        toggleAdBlocker(settings.adBlockerEnabled)
+        return settings
     })
 
     // Sidebar state tracking (no bounds adjustment - sidebar floats over)

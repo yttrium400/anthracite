@@ -95,6 +95,20 @@ contextBridge.exposeInMainWorld('electron', {
         getPreloadPath: () => ipcRenderer.invoke('get-adblock-preload-path'),
     },
 
+    // Settings
+    settings: {
+        getAll: () => ipcRenderer.invoke('get-settings'),
+        get: (key: string) => ipcRenderer.invoke('get-setting', key),
+        set: (key: string, value: any) => ipcRenderer.invoke('set-setting', key, value),
+        update: (updates: Record<string, any>) => ipcRenderer.invoke('update-settings', updates),
+        reset: () => ipcRenderer.invoke('reset-settings'),
+        onChanged: (callback: (data: { key?: string; value?: any; settings: any }) => void) => {
+            const subscription = (_event: any, data: any) => callback(data)
+            ipcRenderer.on('settings-changed', subscription)
+            return () => ipcRenderer.removeListener('settings-changed', subscription)
+        },
+    },
+
     // Sidebar
     sidebar: {
         setOpen: (isOpen: boolean) => ipcRenderer.invoke('sidebar-set-open', isOpen),
@@ -227,6 +241,24 @@ interface TabOrganization {
     isPinned: boolean
 }
 
+interface AppSettings {
+    adBlockerEnabled: boolean
+    httpsUpgradeEnabled: boolean
+    defaultSearchEngine: 'google' | 'duckduckgo' | 'bing' | 'brave'
+    theme: 'light' | 'dark' | 'system'
+    sidebarPosition: 'left' | 'right'
+    compactMode: boolean
+    historyEnabled: boolean
+    historyRetentionDays: number
+    clearHistoryOnExit: boolean
+    blockThirdPartyCookies: boolean
+    sendDoNotTrack: boolean
+    openLinksInNewTab: boolean
+    confirmBeforeClosingMultipleTabs: boolean
+    restoreTabsOnStartup: boolean
+    enableDevTools: boolean
+}
+
 declare global {
     interface Window {
         electron: {
@@ -262,6 +294,14 @@ declare global {
                 onHttpsUpgrade: (callback: (data: { count: number }) => void) => () => void
                 onStatusChange: (callback: (data: { enabled: boolean; blockedCount: number; httpsUpgradeCount: number }) => void) => () => void
                 getPreloadPath: () => Promise<string>
+            }
+            settings: {
+                getAll: () => Promise<AppSettings>
+                get: (key: keyof AppSettings) => Promise<any>
+                set: (key: keyof AppSettings, value: any) => Promise<AppSettings>
+                update: (updates: Partial<AppSettings>) => Promise<AppSettings>
+                reset: () => Promise<AppSettings>
+                onChanged: (callback: (data: { key?: keyof AppSettings; value?: any; settings: AppSettings }) => void) => () => void
             }
             sidebar: {
                 setOpen: (isOpen: boolean) => Promise<void>
