@@ -37,7 +37,7 @@ import {
     Copy,
 } from 'lucide-react';
 import { RealmSwitcher } from './RealmSwitcher';
-import { Dock } from './Dock';
+import { SortableDock, DockDragOverlay } from './SortableDock';
 import { RealmModal } from './RealmModal';
 import { DockModal } from './DockModal';
 import { ContextMenu, useContextMenu, ContextMenuItem } from './ContextMenu';
@@ -131,6 +131,8 @@ export function Sidebar({ className }: SidebarProps) {
     // Drag and Drop state
     const [activeId, setActiveId] = useState<string | null>(null);
     const [draggedTab, setDraggedTab] = useState<Tab | null>(null);
+    const [draggedDock, setDraggedDock] = useState<DockType | null>(null);
+    const [dropTarget, setDropTarget] = useState<{ containerId: string; index: number } | null>(null);
 
     // DnD sensors
     const sensors = useSensors(
@@ -143,6 +145,28 @@ export function Sidebar({ className }: SidebarProps) {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    // Refresh state from backend
+    const refreshState = useCallback(async () => {
+        if (!window.electron) return;
+        try {
+            const state = await window.electron.sidebarState.get();
+            setDocks(state.docks);
+
+            const orgs: Record<string, TabOrganization> = {};
+            state.tabs.forEach((tab: Tab) => {
+                orgs[tab.id] = {
+                    realmId: tab.realmId || state.activeRealmId,
+                    dockId: tab.dockId || null,
+                    order: tab.order || 0,
+                    isPinned: tab.isPinned || false,
+                };
+            });
+            setTabOrganizations(orgs);
+        } catch (err) {
+            console.error('Failed to refresh state:', err);
+        }
+    }, []);
 
     // Load initial state
     useEffect(() => {
@@ -243,6 +267,19 @@ export function Sidebar({ className }: SidebarProps) {
         const unsubscribeDockDeleted = window.electron.docks.onDeleted(({ dockId }) => {
             setDocks(prev => prev.filter(d => d.id !== dockId));
         });
+        const unsubscribeDockReordered = window.electron.docks.onReordered(({ dockIds }) => {
+            // Update dock order based on the new order
+            setDocks(prev => {
+                const updated = prev.map(dock => {
+                    const newOrder = dockIds.indexOf(dock.id);
+                    if (newOrder !== -1) {
+                        return { ...dock, order: newOrder };
+                    }
+                    return dock;
+                });
+                return updated.sort((a, b) => a.order - b.order);
+            });
+        });
 
         // Tab organization subscription
         const unsubscribeTabOrg = window.electron.tabOrganization.onChanged((data) => {
@@ -270,6 +307,7 @@ export function Sidebar({ className }: SidebarProps) {
             unsubscribeDockCreated();
             unsubscribeDockUpdated();
             unsubscribeDockDeleted();
+            unsubscribeDockReordered();
             unsubscribeTabOrg();
         };
     }, []);
@@ -279,6 +317,13 @@ export function Sidebar({ className }: SidebarProps) {
     const handleMouseLeave = useCallback((e: React.MouseEvent) => {
         // Don't close sidebar if pinned or if we're actively dragging
         if (isPinned || activeId) return;
+
+        // Don't close if any context menu is open
+        if (tabContextMenu.contextMenu.position ||
+            dockContextMenu.contextMenu.position ||
+            realmContextMenu.contextMenu.position) {
+            return;
+        }
 
         // Check if we're actually leaving the sidebar, not moving to a child element
         const sidebar = sidebarRef.current;
@@ -290,7 +335,7 @@ export function Sidebar({ className }: SidebarProps) {
         }
 
         setIsVisible(false);
-    }, [isPinned, activeId]);
+    }, [isPinned, activeId, tabContextMenu.contextMenu.position, dockContextMenu.contextMenu.position, realmContextMenu.contextMenu.position]);
 
     // Keyboard shortcut (Cmd/Ctrl + \)
     useEffect(() => {
@@ -369,30 +414,143 @@ export function Sidebar({ className }: SidebarProps) {
         const { active } = event;
         setActiveId(active.id as string);
 
+        // Check if dragging a dock
+        const activeData = active.data.current;
+        if (activeData?.type === 'dock' && activeData.dock) {
+            setDraggedDock(activeData.dock as DockType);
+            setDraggedTab(null);
+            return;
+        }
+
         // Find the tab being dragged
         const tab = tabs.find(t => t.id === active.id);
         if (tab) {
             setDraggedTab(tab);
+            setDraggedDock(null);
         }
     }, [tabs]);
+
+    const handleDragOver = useCallback((event: DragOverEvent) => {
+        const { active, over } = event;
+
+        if (!over || !draggedTab) {
+            setDropTarget(null);
+            return;
+        }
+
+        const overData = over.data.current;
+        let containerId: string | null = null;
+        let index = 0;
+
+        if (overData?.type === 'dock' || overData?.type === 'dock-drop') {
+            containerId = overData.dockId as string;
+            // Dropping on dock itself means end of list
+            const dockTabs = tabs.filter(t => tabOrganizations[t.id]?.dockId === containerId);
+            index = dockTabs.length;
+        } else if (overData?.type === 'tab') {
+            containerId = (overData.containerId as string) || 'loose';
+            // Find the index of the tab we're hovering over
+            const containerTabs = containerId === 'loose'
+                ? tabs.filter(t => {
+                    const org = tabOrganizations[t.id];
+                    return org?.realmId === activeRealmId && !org?.dockId && !org?.isPinned;
+                }).sort((a, b) => (tabOrganizations[a.id]?.order || 0) - (tabOrganizations[b.id]?.order || 0))
+                : tabs.filter(t => tabOrganizations[t.id]?.dockId === containerId)
+                    .sort((a, b) => (tabOrganizations[a.id]?.order || 0) - (tabOrganizations[b.id]?.order || 0));
+
+            index = containerTabs.findIndex(t => t.id === over.id);
+            if (index === -1) index = containerTabs.length;
+        } else if ((over.id as string) === 'loose-tabs-dropzone') {
+            containerId = 'loose';
+            const looseTabs = tabs.filter(t => {
+                const org = tabOrganizations[t.id];
+                return org?.realmId === activeRealmId && !org?.dockId && !org?.isPinned;
+            });
+            index = looseTabs.length;
+        }
+
+        if (containerId) {
+            // Check if the dragged tab is from the same container
+            const sourceContainerId = tabOrganizations[active.id as string]?.dockId || 'loose';
+            const isSameContainer = (sourceContainerId === containerId) ||
+                (sourceContainerId === null && containerId === 'loose');
+
+            // Adjust index if moving within same container and source is before target
+            if (isSameContainer) {
+                const containerTabs = containerId === 'loose'
+                    ? tabs.filter(t => {
+                        const org = tabOrganizations[t.id];
+                        return org?.realmId === activeRealmId && !org?.dockId && !org?.isPinned;
+                    }).sort((a, b) => (tabOrganizations[a.id]?.order || 0) - (tabOrganizations[b.id]?.order || 0))
+                    : tabs.filter(t => tabOrganizations[t.id]?.dockId === containerId)
+                        .sort((a, b) => (tabOrganizations[a.id]?.order || 0) - (tabOrganizations[b.id]?.order || 0));
+
+                const sourceIndex = containerTabs.findIndex(t => t.id === active.id);
+                if (sourceIndex !== -1 && sourceIndex < index) {
+                    index = index; // Keep as is, indicator shows after the hovered item
+                }
+            }
+
+            setDropTarget({ containerId, index });
+        } else {
+            setDropTarget(null);
+        }
+    }, [draggedTab, tabs, tabOrganizations, activeRealmId]);
 
     const handleDragEnd = useCallback(async (event: DragEndEvent) => {
         const { active, over } = event;
 
         setActiveId(null);
         setDraggedTab(null);
+        setDraggedDock(null);
+        setDropTarget(null);
 
         if (!over) return;
         if (active.id === over.id) return; // No change needed
 
-        const activeTabId = active.id as string;
-        const overId = over.id as string;
-
-        // Get the data about the active item and over target
         const activeData = active.data.current;
         const overData = over.data.current;
 
         if (!activeData) return;
+
+        // Handle dock reordering
+        if (activeData.type === 'dock') {
+            const activeDockId = (active.id as string).replace('dock-', '');
+            const overDockId = (over.id as string).replace('dock-', '');
+
+            // Only reorder if dropped on another dock
+            if (overData?.type === 'dock' || (over.id as string).startsWith('dock-')) {
+                const currentDocks = docks
+                    .filter(d => d.realmId === activeRealmId)
+                    .sort((a, b) => a.order - b.order);
+
+                const oldIndex = currentDocks.findIndex(d => d.id === activeDockId);
+                const newIndex = currentDocks.findIndex(d => d.id === overDockId);
+
+                if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+                    const newOrder = [...currentDocks];
+                    const [movedItem] = newOrder.splice(oldIndex, 1);
+                    newOrder.splice(newIndex, 0, movedItem);
+                    const dockIds = newOrder.map(d => d.id);
+
+                    // Optimistic update
+                    setDocks(prev => {
+                        const updated = prev.map((dock, idx) => {
+                            const newIdx = dockIds.indexOf(dock.id);
+                            return newIdx !== -1 ? { ...dock, order: newIdx } : dock;
+                        });
+                        return updated.sort((a, b) => a.order - b.order);
+                    });
+
+                    await window.electron?.docks.reorder(activeRealmId, dockIds);
+                }
+            }
+            return;
+        }
+
+        // Handle tab dragging
+        const activeTabId = active.id as string;
+        const overId = over.id as string;
 
         // Default to 'loose' if containerId is undefined (for legacy tabs)
         const sourceContainerId = (activeData.containerId as string) || 'loose';
@@ -400,8 +558,8 @@ export function Sidebar({ className }: SidebarProps) {
         // Determine target container
         let targetContainerId: string | null = null;
 
-        if (overData?.type === 'dock') {
-            // Dropped directly on a dock
+        if (overData?.type === 'dock' || overData?.type === 'dock-drop') {
+            // Dropped directly on a dock (either sortable or droppable zone)
             targetContainerId = overData.dockId as string;
         } else if (overData?.type === 'tab') {
             // Dropped on another tab - use the tab's container
@@ -415,11 +573,23 @@ export function Sidebar({ className }: SidebarProps) {
 
         // Handle cross-container moves
         if (sourceContainerId !== targetContainerId) {
+            // Optimistic update for cross-container move
+            setTabOrganizations(prev => ({
+                ...prev,
+                [activeTabId]: {
+                    ...prev[activeTabId],
+                    dockId: targetContainerId === 'loose' ? null : targetContainerId,
+                    order: 0,
+                },
+            }));
+
             if (targetContainerId === 'loose') {
                 await window.electron?.tabOrganization.moveToLoose(activeTabId);
             } else {
                 await window.electron?.tabOrganization.moveToDock(activeTabId, targetContainerId);
             }
+            // Refresh to get correct order
+            await refreshState();
         } else {
             // Reorder within same container - only if dropped on a tab
             if (overData?.type === 'tab') {
@@ -450,6 +620,17 @@ export function Sidebar({ className }: SidebarProps) {
                     newOrder.splice(newIndex, 0, movedItem);
                     const tabIds = newOrder.map(t => t.id);
 
+                    // Optimistic update for reorder
+                    setTabOrganizations(prev => {
+                        const updated = { ...prev };
+                        tabIds.forEach((id, idx) => {
+                            if (updated[id]) {
+                                updated[id] = { ...updated[id], order: idx };
+                            }
+                        });
+                        return updated;
+                    });
+
                     if (targetContainerId === 'loose') {
                         await window.electron?.tabOrganization.reorderLoose(activeRealmId, tabIds);
                     } else {
@@ -458,7 +639,7 @@ export function Sidebar({ className }: SidebarProps) {
                 }
             }
         }
-    }, [tabs, tabOrganizations, activeRealmId]);
+    }, [tabs, tabOrganizations, activeRealmId, docks, refreshState]);
 
 
     const handleToggleAdBlock = useCallback(async () => {
@@ -568,7 +749,10 @@ export function Sidebar({ className }: SidebarProps) {
     // Get tabs for a specific dock
     const getTabsForDock = (dockId: string) => {
         return activeRealmTabs
-            .filter(tab => tabOrganizations[tab.id]?.dockId === dockId)
+            .filter(tab => {
+                const org = tabOrganizations[tab.id];
+                return org?.dockId === dockId;
+            })
             .sort((a, b) => (tabOrganizations[a.id]?.order || 0) - (tabOrganizations[b.id]?.order || 0));
     };
 
@@ -741,6 +925,7 @@ export function Sidebar({ className }: SidebarProps) {
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
             <>
@@ -897,20 +1082,27 @@ export function Sidebar({ className }: SidebarProps) {
                                         <FolderPlus className="h-3.5 w-3.5" />
                                     </button>
                                 </div>
-                                {activeRealmDocks.map((dock) => (
-                                    <Dock
-                                        key={dock.id}
-                                        dock={dock}
-                                        tabs={getTabsForDock(dock.id)}
-                                        activeTabId={activeTabId}
-                                        onToggleCollapse={() => handleToggleDockCollapse(dock.id)}
-                                        onTabClick={handleSwitchTab}
-                                        onTabClose={handleCloseTab}
-                                        onAddTab={() => handleCreateTab(dock.id)}
-                                        onContextMenu={(e) => handleDockContextMenu(e, dock)}
-                                        onTabContextMenu={handleTabContextMenu}
-                                    />
-                                ))}
+                                <SortableContext
+                                    items={activeRealmDocks.map(d => `dock-${d.id}`)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    {activeRealmDocks.map((dock) => (
+                                        <SortableDock
+                                            key={dock.id}
+                                            dock={dock}
+                                            tabs={getTabsForDock(dock.id)}
+                                            activeTabId={activeTabId}
+                                            draggedTabId={draggedTab?.id}
+                                            dropTarget={dropTarget}
+                                            onToggleCollapse={() => handleToggleDockCollapse(dock.id)}
+                                            onTabClick={handleSwitchTab}
+                                            onTabClose={handleCloseTab}
+                                            onAddTab={() => handleCreateTab(dock.id)}
+                                            onContextMenu={(e) => handleDockContextMenu(e, dock)}
+                                            onTabContextMenu={handleTabContextMenu}
+                                        />
+                                    ))}
+                                </SortableContext>
                             </section>
                         )}
 
@@ -935,18 +1127,29 @@ export function Sidebar({ className }: SidebarProps) {
                                 strategy={verticalListSortingStrategy}
                             >
                                 <ul className="space-y-0.5">
-                                    {looseTabs.map((tab) => (
+                                    {looseTabs.map((tab, index) => (
                                         <li key={tab.id}>
                                             <SortableTab
                                                 tab={tab}
                                                 isActive={activeTabId === tab.id}
                                                 containerId="loose"
+                                                showDropIndicator={
+                                                    dropTarget?.containerId === 'loose' &&
+                                                    dropTarget?.index === index &&
+                                                    draggedTab?.id !== tab.id
+                                                }
                                                 onTabClick={handleSwitchTab}
                                                 onTabClose={handleCloseTab}
                                                 onContextMenu={handleTabContextMenu}
                                             />
                                         </li>
                                     ))}
+                                    {/* End-of-list drop indicator */}
+                                    {dropTarget?.containerId === 'loose' &&
+                                        dropTarget?.index === looseTabs.length &&
+                                        looseTabs.length > 0 && (
+                                        <li className="h-0.5 mx-2 bg-brand rounded-full" />
+                                    )}
                                 </ul>
                             </SortableContext>
 
@@ -1061,6 +1264,8 @@ export function Sidebar({ className }: SidebarProps) {
             <DragOverlay dropAnimation={null}>
                 {activeId && draggedTab ? (
                     <TabDragOverlay tab={draggedTab} />
+                ) : activeId && draggedDock ? (
+                    <DockDragOverlay dock={draggedDock} tabCount={getTabsForDock(draggedDock.id).length} />
                 ) : null}
             </DragOverlay>
         </DndContext>

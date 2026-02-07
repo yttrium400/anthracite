@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TopBar } from './components/TopBar';
 import { Sidebar } from './components/Sidebar';
 import { HomePage } from './components/HomePage';
+import { RealmSearch } from './components/RealmSearch';
 import { cn } from './lib/utils';
 
 interface Tab {
@@ -17,10 +18,24 @@ function App() {
     const [tabs, setTabs] = useState<Tab[]>([]);
     const [activeTabId, setActiveTabId] = useState<string | null>(null);
     const [preloadPath, setPreloadPath] = useState<string>('');
+    const [showRealmSearch, setShowRealmSearch] = useState(false);
     const webviewRefs = useRef<Map<string, Electron.WebviewTag>>(new Map());
 
     const activeTab = tabs.find(t => t.id === activeTabId);
     const isHomePage = activeTab?.url === 'poseidon://newtab' || activeTab?.url.startsWith('poseidon://');
+
+    // Keyboard shortcut for Realm Search (Cmd+Shift+K)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                setShowRealmSearch(prev => !prev);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     useEffect(() => {
         if (typeof window !== 'undefined' && window.electron) {
@@ -173,6 +188,12 @@ function App() {
                     </div>
                 )}
             </main>
+
+            {/* Realm Search Modal */}
+            <RealmSearch
+                isOpen={showRealmSearch}
+                onClose={() => setShowRealmSearch(false)}
+            />
         </div>
     );
 }

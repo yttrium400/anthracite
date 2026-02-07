@@ -12,7 +12,11 @@ import {
     Loader2,
     History,
     Search,
+    ChevronDown,
+    Check,
 } from 'lucide-react';
+import { getIconComponent } from './IconPicker';
+import type { Realm, ThemeColor } from '../../shared/types';
 
 interface TopBarProps {
     className?: string;
@@ -36,6 +40,46 @@ interface Suggestion {
     visitCount?: number;
 }
 
+// Color mappings for realm indicator
+const COLOR_BG_MAP: Record<ThemeColor, string> = {
+    blue: 'bg-blue-500/10',
+    purple: 'bg-purple-500/10',
+    pink: 'bg-pink-500/10',
+    red: 'bg-red-500/10',
+    orange: 'bg-orange-500/10',
+    yellow: 'bg-yellow-500/10',
+    green: 'bg-green-500/10',
+    teal: 'bg-teal-500/10',
+    cyan: 'bg-cyan-500/10',
+    gray: 'bg-gray-500/10',
+};
+
+const COLOR_TEXT_MAP: Record<ThemeColor, string> = {
+    blue: 'text-blue-600',
+    purple: 'text-purple-600',
+    pink: 'text-pink-600',
+    red: 'text-red-600',
+    orange: 'text-orange-600',
+    yellow: 'text-yellow-600',
+    green: 'text-green-600',
+    teal: 'text-teal-600',
+    cyan: 'text-cyan-600',
+    gray: 'text-gray-600',
+};
+
+const COLOR_BORDER_MAP: Record<ThemeColor, string> = {
+    blue: 'border-blue-500/30',
+    purple: 'border-purple-500/30',
+    pink: 'border-pink-500/30',
+    red: 'border-red-500/30',
+    orange: 'border-orange-500/30',
+    yellow: 'border-yellow-500/30',
+    green: 'border-green-500/30',
+    teal: 'border-teal-500/30',
+    cyan: 'border-cyan-500/30',
+    gray: 'border-gray-500/30',
+};
+
 export function TopBar({ className }: TopBarProps) {
     const [activeTab, setActiveTab] = useState<ActiveTab | null>(null);
     const [inputValue, setInputValue] = useState('');
@@ -48,8 +92,14 @@ export function TopBar({ className }: TopBarProps) {
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [showSuggestions, setShowSuggestions] = useState(false);
 
+    // Realm state
+    const [realms, setRealms] = useState<Realm[]>([]);
+    const [activeRealmId, setActiveRealmId] = useState<string>('');
+    const [showRealmDropdown, setShowRealmDropdown] = useState(false);
+
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
+    const realmDropdownRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<NodeJS.Timeout>();
     const activeTabIdRef = useRef<string | null>(null);
 
@@ -57,6 +107,58 @@ export function TopBar({ className }: TopBarProps) {
     useEffect(() => {
         activeTabIdRef.current = activeTab?.id || null;
     }, [activeTab]);
+
+    // Load realm state and subscribe to changes
+    useEffect(() => {
+        if (typeof window === 'undefined' || !window.electron) return;
+
+        const loadState = async () => {
+            try {
+                const state = await window.electron.sidebarState.get();
+                setRealms(state.realms);
+                setActiveRealmId(state.activeRealmId);
+            } catch (err) {
+                console.error('Failed to load realm state:', err);
+            }
+        };
+
+        loadState();
+
+        // Subscribe to realm changes
+        const unsubscribeRealmCreated = window.electron.realms.onCreated((realm) => {
+            setRealms(prev => [...prev, realm].sort((a, b) => a.order - b.order));
+        });
+        const unsubscribeRealmUpdated = window.electron.realms.onUpdated((realm) => {
+            setRealms(prev => prev.map(r => r.id === realm.id ? realm : r));
+        });
+        const unsubscribeRealmDeleted = window.electron.realms.onDeleted(({ realmId }) => {
+            setRealms(prev => prev.filter(r => r.id !== realmId));
+        });
+        const unsubscribeActiveRealmChanged = window.electron.realms.onActiveChanged(({ realmId }) => {
+            setActiveRealmId(realmId);
+        });
+
+        return () => {
+            unsubscribeRealmCreated();
+            unsubscribeRealmUpdated();
+            unsubscribeRealmDeleted();
+            unsubscribeActiveRealmChanged();
+        };
+    }, []);
+
+    // Close realm dropdown on outside click
+    useEffect(() => {
+        if (!showRealmDropdown) return;
+
+        const handleClick = (e: MouseEvent) => {
+            if (realmDropdownRef.current && !realmDropdownRef.current.contains(e.target as Node)) {
+                setShowRealmDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, [showRealmDropdown]);
 
     // Subscribe to active tab changes
     useEffect(() => {
@@ -333,6 +435,15 @@ export function TopBar({ className }: TopBarProps) {
     const isSecure = activeTab?.url.startsWith('https://');
     const displayUrl = isEditing ? inputValue : (activeTab?.url || '');
 
+    // Get current realm
+    const currentRealm = realms.find(r => r.id === activeRealmId);
+
+    // Handle realm switch
+    const handleRealmSwitch = (realmId: string) => {
+        window.electron?.realms.setActive(realmId);
+        setShowRealmDropdown(false);
+    };
+
     // Extract domain for display when not editing
     const getDomain = (url: string) => {
         try {
@@ -394,6 +505,74 @@ export function TopBar({ className }: TopBarProps) {
                     )}
                 </button>
             </div>
+
+            {/* Realm Indicator */}
+            {currentRealm && (
+                <div
+                    ref={realmDropdownRef}
+                    className="relative"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                >
+                    <button
+                        onClick={() => setShowRealmDropdown(!showRealmDropdown)}
+                        className={cn(
+                            "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg",
+                            "border transition-all duration-200",
+                            COLOR_BG_MAP[currentRealm.color],
+                            COLOR_BORDER_MAP[currentRealm.color],
+                            "hover:brightness-95"
+                        )}
+                        title="Switch realm"
+                    >
+                        {(() => {
+                            const RealmIcon = getIconComponent(currentRealm.icon);
+                            return <RealmIcon className={cn("h-3.5 w-3.5", COLOR_TEXT_MAP[currentRealm.color])} />;
+                        })()}
+                        <span className={cn("text-xs font-medium max-w-[80px] truncate", COLOR_TEXT_MAP[currentRealm.color])}>
+                            {currentRealm.name}
+                        </span>
+                        <ChevronDown className={cn(
+                            "h-3 w-3 transition-transform",
+                            COLOR_TEXT_MAP[currentRealm.color],
+                            showRealmDropdown && "rotate-180"
+                        )} />
+                    </button>
+
+                    {/* Realm Dropdown */}
+                    {showRealmDropdown && (
+                        <div className={cn(
+                            "absolute top-full left-0 mt-1 min-w-[160px] z-[100]",
+                            "bg-white/95 backdrop-blur-xl rounded-xl",
+                            "border border-border/60 shadow-lg",
+                            "py-1.5 animate-in fade-in zoom-in-95 duration-100"
+                        )}>
+                            {realms.map((realm) => {
+                                const RealmIcon = getIconComponent(realm.icon);
+                                const isActive = realm.id === activeRealmId;
+                                return (
+                                    <button
+                                        key={realm.id}
+                                        onClick={() => handleRealmSwitch(realm.id)}
+                                        className={cn(
+                                            "flex items-center gap-2 w-full px-3 py-2 text-left",
+                                            "text-sm transition-colors duration-100",
+                                            isActive
+                                                ? cn(COLOR_BG_MAP[realm.color], COLOR_TEXT_MAP[realm.color])
+                                                : "text-text-primary hover:bg-surface-secondary"
+                                        )}
+                                    >
+                                        <RealmIcon className={cn("h-4 w-4", COLOR_TEXT_MAP[realm.color])} />
+                                        <span className="flex-1 truncate">{realm.name}</span>
+                                        {isActive && (
+                                            <Check className={cn("h-3.5 w-3.5", COLOR_TEXT_MAP[realm.color])} />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* URL / Search Bar */}
             <form

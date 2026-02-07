@@ -18,6 +18,7 @@ interface SortableTabProps {
     containerId: string; // dock ID or 'loose'
     textColor?: string;
     borderColor?: string;
+    showDropIndicator?: boolean; // Show drop indicator above this tab
     onTabClick: (tabId: string) => void;
     onTabClose: (tabId: string) => void;
     onContextMenu?: (e: React.MouseEvent, tab: Tab) => void;
@@ -29,6 +30,7 @@ export function SortableTab({
     containerId,
     textColor = 'text-text-secondary',
     borderColor = 'border-gray-500/20',
+    showDropIndicator = false,
     onTabClick,
     onTabClose,
     onContextMenu,
@@ -66,20 +68,25 @@ export function SortableTab({
     };
 
     return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            onClick={() => onTabClick(tab.id)}
-            onContextMenu={(e) => onContextMenu?.(e, tab)}
-            className={cn(
-                "flex items-center w-full gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer",
-                "transition-all duration-150 ease-out group/tab",
-                isDragging && "z-50 shadow-lg",
-                isActive
-                    ? cn("bg-white shadow-sm border", borderColor, textColor)
-                    : "text-text-secondary hover:bg-white/50 hover:text-text-primary"
+        <div className="relative">
+            {/* Drop indicator line */}
+            {showDropIndicator && (
+                <div className="absolute -top-0.5 left-2 right-2 h-0.5 bg-brand rounded-full z-10" />
             )}
-        >
+            <div
+                ref={setNodeRef}
+                style={style}
+                onClick={() => onTabClick(tab.id)}
+                onContextMenu={(e) => onContextMenu?.(e, tab)}
+                className={cn(
+                    "flex items-center w-full gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer",
+                    "transition-all duration-150 ease-out group/tab",
+                    isDragging && "z-50 shadow-lg opacity-50",
+                    isActive
+                        ? cn("bg-white shadow-sm border", borderColor, textColor)
+                        : "text-text-secondary hover:bg-white/50 hover:text-text-primary"
+                )}
+            >
             {/* Drag Handle */}
             <div
                 {...attributes}
@@ -131,6 +138,7 @@ export function SortableTab({
             >
                 <X className="h-3 w-3" />
             </button>
+            </div>
         </div>
     );
 }

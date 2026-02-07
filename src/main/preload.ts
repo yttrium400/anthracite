@@ -172,6 +172,11 @@ contextBridge.exposeInMainWorld('electron', {
             ipcRenderer.on('dock-deleted', subscription)
             return () => ipcRenderer.removeListener('dock-deleted', subscription)
         },
+        onReordered: (callback: (data: { realmId: string; dockIds: string[] }) => void) => {
+            const subscription = (_event: any, data: any) => callback(data)
+            ipcRenderer.on('docks-reordered', subscription)
+            return () => ipcRenderer.removeListener('docks-reordered', subscription)
+        },
     },
 
     // Tab Organization
@@ -294,6 +299,7 @@ declare global {
                 onCreated: (callback: (dock: Dock) => void) => () => void
                 onUpdated: (callback: (dock: Dock) => void) => () => void
                 onDeleted: (callback: (data: { dockId: string }) => void) => () => void
+                onReordered: (callback: (data: { realmId: string; dockIds: string[] }) => void) => () => void
             }
             tabOrganization: {
                 get: (tabId: string) => Promise<TabOrganization | null>
