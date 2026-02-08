@@ -108,6 +108,7 @@ const WebviewController = React.memo(({ tab, isActive, lastWebUrl, onUpdate, onM
                 webpreferences="contextIsolation=yes, nodeIntegration=no, sandbox=yes"
                 partition="persist:poseidon"
                 preload={preloadPath}
+                useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
                 // @ts-ignore
                 allowpopups="true"
             />
@@ -291,18 +292,21 @@ function App() {
         const tab = tabs.find(t => t.id === activeTabId);
         const webview = webviewRefs.current.get(activeTabId);
 
-        if (tab?.url === 'poseidon://newtab' && webview) {
-            // On home page with a preserved webview — restore the webview's current URL
-            // We didn't actually navigate the webview when going "back" to home page,
-            // so we just need to show the webview again by restoring its URL to the tab
-            const webviewUrl = webview.getURL();
-            console.log('[Forward] On home page, webview URL:', webviewUrl);
-            if (webviewUrl && webviewUrl !== 'about:blank') {
-                window.electron?.navigation.navigate(webviewUrl);
-                setTabs(prev => prev.map(t =>
-                    t.id === activeTabId ? { ...t, url: webviewUrl, canGoForward: false } : t
-                ));
-            }
+        if (tab?.url === 'poseidon://newtab' && webview && webview.canGoForward()) {
+            // On home page with a webview that has forward history — go forward in webview
+            webview.goForward();
+            // After goForward, the did-navigate event will fire and update the tab URL
+            // But we also need to immediately show the webview by updating the tab URL
+            // We'll use a small delay to get the new URL after navigation
+            setTimeout(() => {
+                const newUrl = webview.getURL();
+                if (newUrl && newUrl !== 'about:blank') {
+                    window.electron?.navigation.navigate(newUrl);
+                    setTabs(prev => prev.map(t =>
+                        t.id === activeTabId ? { ...t, url: newUrl } : t
+                    ));
+                }
+            }, 50);
         } else if (webview && webview.canGoForward()) {
             webview.goForward();
         }

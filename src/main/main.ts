@@ -1318,6 +1318,13 @@ app.on('activate', () => {
 app.whenReady().then(async () => {
     setupIPC()
 
+    // Set Chrome user agent for the webview partition to ensure websites
+    // (like YouTube) serve the full desktop version, not simplified layouts
+    const webviewSession = session.fromPartition('persist:poseidon')
+    webviewSession.setUserAgent(
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    )
+
     // Migrate history from JSON to SQLite (one-time)
     migrateFromJson()
 

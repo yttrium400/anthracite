@@ -341,21 +341,6 @@ export function TopBar({
         inputRef.current?.blur();
     };
 
-    const handleGoBack = () => {
-        window.electron?.navigation.goBack();
-    };
-
-    const handleGoForward = () => {
-        window.electron?.navigation.goForward();
-    };
-
-    const handleReload = () => {
-        if (activeTab?.isLoading) {
-            window.electron?.navigation.stop();
-        } else {
-            window.electron?.navigation.reload();
-        }
-    };
 
     const handleRunAgent = async () => {
         if (!inputValue.trim()) return;
@@ -482,33 +467,33 @@ export function TopBar({
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
             >
                 <button
-                    onClick={handleGoBack}
-                    disabled={!activeTab?.canGoBack}
+                    onClick={onBack}
+                    disabled={!canGoBack}
                     className={cn(
                         "btn-icon h-8 w-8",
-                        !activeTab?.canGoBack && "opacity-30 cursor-not-allowed"
+                        !canGoBack && "opacity-30 cursor-not-allowed"
                     )}
                     title="Go back"
                 >
                     <ArrowLeft className="h-4 w-4" />
                 </button>
                 <button
-                    onClick={handleGoForward}
-                    disabled={!activeTab?.canGoForward}
+                    onClick={onForward}
+                    disabled={!canGoForward}
                     className={cn(
                         "btn-icon h-8 w-8",
-                        !activeTab?.canGoForward && "opacity-30 cursor-not-allowed"
+                        !canGoForward && "opacity-30 cursor-not-allowed"
                     )}
                     title="Go forward"
                 >
                     <ArrowRight className="h-4 w-4" />
                 </button>
                 <button
-                    onClick={handleReload}
+                    onClick={onReload}
                     className="btn-icon h-8 w-8"
-                    title={activeTab?.isLoading ? "Stop" : "Reload"}
+                    title={isLoading ? "Stop" : "Reload"}
                 >
-                    {activeTab?.isLoading ? (
+                    {isLoading ? (
                         <X className="h-4 w-4" />
                     ) : (
                         <RotateCw className="h-4 w-4" />
