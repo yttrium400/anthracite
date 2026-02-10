@@ -1,11 +1,12 @@
 /**
  * Preload script for <webview> tags.
- * Runs in the webview's isolated context with access to ipcRenderer.
+ * Runs in the webview's isolated context.
  * Forwards horizontal wheel events to the host page for swipe navigation.
- *
- * NOTE: Gesture lifecycle (begin/end) is NOT detected here.
- * macOS scroll-touch-begin/end events on BrowserWindow handle that reliably.
  */
+
+// @ts-ignore
+// Side-effect import to inject cosmetic filters (requires sandbox: false or bundling)
+require('@ghostery/adblocker-electron-preload')
 import { ipcRenderer } from 'electron'
 
 let lastSendTime = 0

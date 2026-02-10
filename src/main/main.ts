@@ -137,7 +137,7 @@ function applyUiScale(scale: string): void {
     for (const [, tab] of tabs) {
         try {
             tab.view.webContents.setZoomLevel(zoomLevel)
-        } catch {}
+        } catch { }
     }
 }
 
@@ -200,7 +200,8 @@ function createTab(url: string = 'poseidon://newtab', options?: { realmId?: stri
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            sandbox: true,
+            sandbox: false,
+            preload: path.join(__dirname, 'webview-preload.js'), // Inject cosmetic filtering script + swipe gestures
         }
     })
 
@@ -227,10 +228,10 @@ function createTab(url: string = 'poseidon://newtab', options?: { realmId?: stri
 
     // Enable ad-blocker on this view
     // Enable ad-blocker on this view if enabled in settings
-    if (blocker && adBlockEnabled) {
-        // We need to enable it on the session
-        safeEnableBlocking(view.webContents.session)
-    }
+    // Enable ad-blocker on this view
+    // Note: We don't need to call safeEnableBlocking here because we enabled it on the session
+    // globally in initAdBlocker, and the session is persistent.
+    // Calling it here would reset the webRequest listeners, breaking our HTTPS upgrade interceptor.
 
     const tab: Tab = {
         id,
@@ -465,8 +466,20 @@ function sendActiveTabUpdate(): void {
 // ============================================
 
 // Enable ghostery ad blocking on a session (network filters + cosmetic filters)
+// Enable ghostery ad blocking on a session (network filters + cosmetic filters)
 function safeEnableBlocking(sess: Electron.Session) {
     if (!sess || !blocker) return
+
+    // Polyfill for Electron versions missing registerPreloadScript (e.g. Electron 28)
+    // The adblocker library expects this API to exist to inject its preload script.
+    // We strictly manage the preload script manually in createTab via 'webview-preload.js',
+    // so we can safely stub this out to prevent the library from crashing.
+    if (typeof (sess as any).registerPreloadScript !== 'function') {
+        (sess as any).registerPreloadScript = () => {
+            // No-op: We manually inject the cosmetic filtering script in createTab
+        }
+    }
+
     blocker.enableBlockingInSession(sess)
 }
 
@@ -502,10 +515,45 @@ function setupRequestInterceptor(sess: Electron.Session): void {
 }
 
 
+import { promises as fs } from 'node:fs'
+
+const AD_BLOCK_ENGINE_CACHE = path.join(app.getPath('userData'), 'adblock-engine.bin')
+
 async function initAdBlocker(): Promise<void> {
     try {
         httpsUpgradeEnabled = settingsStore.get('httpsUpgradeEnabled')
-        blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch)
+
+        // Try to load from cache first for instant startup
+        try {
+            const buffer = await fs.readFile(AD_BLOCK_ENGINE_CACHE)
+            blocker = await ElectronBlocker.deserialize(buffer)
+        } catch (e) {
+            // Cache missing or invalid, fall back to downloading
+        }
+
+        if (!blocker) {
+            // Use a comprehensive set of filter lists for production-grade blocking
+            // This includes EasyList (Ads), EasyPrivacy (Trackers), and uBlock Origin filters (Optimizations/Fixes)
+            blocker = await ElectronBlocker.fromLists(fetch, [
+                'https://easylist.to/easylist/easylist.txt',
+                'https://easylist.to/easylist/easyprivacy.txt',
+                'https://ublockorigin.pages.dev/thirdparties/easylist-cookie.txt',
+                'https://ublockorigin.pages.dev/thirdparties/ublock-filters.txt',
+                'https://ublockorigin.pages.dev/thirdparties/ublock-badware.txt',
+                'https://ublockorigin.pages.dev/thirdparties/ublock-privacy.txt',
+                'https://ublockorigin.pages.dev/thirdparties/ublock-quick-fixes.txt',
+                'https://ublockorigin.pages.dev/thirdparties/ublock-unbreak.txt',
+                'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt',
+                'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-2024.txt',
+            ])
+
+            // Save to cache for next time
+            try {
+                await fs.writeFile(AD_BLOCK_ENGINE_CACHE, blocker.serialize())
+            } catch (e) {
+                console.error('Failed to save adblock engine cache:', e)
+            }
+        }
 
         blocker.on('request-blocked', (request) => {
             blockedCount++
@@ -521,10 +569,12 @@ async function initAdBlocker(): Promise<void> {
             }
         })
 
-        // Enable on default session and webview partition if enabled
+        // Enable on default session (BrowserView tabs)
         if (adBlockEnabled) {
             safeEnableBlocking(session.defaultSession)
-            safeEnableBlocking(session.fromPartition('persist:poseidon'))
+            // Note: We do NOT enable on 'persist:poseidon' (internal webviews) to avoid
+            // "Attempted to register a second handler" error from the library.
+            // Internal pages don't need ad blocking anyway.
         }
 
         // Setup HTTPS upgrade interceptor on defaultSession (BrowserView tabs)
@@ -540,10 +590,9 @@ function toggleAdBlocker(enabled: boolean): void {
     adBlockEnabled = enabled
 
     if (blocker) {
-        // Toggle on both defaultSession (BrowserView) and webview partition
+        // Toggle on defaultSession (BrowserView) only
         const sessions = [
             session.defaultSession,
-            session.fromPartition('persist:poseidon'),
         ]
 
         for (const sess of sessions) {
@@ -584,6 +633,9 @@ function setupIPC(): void {
         switchToTab(tab.id)
         return { id: tab.id, realmId: getTabOrganization(tab.id)?.realmId }
     })
+
+    // AdBlock Preload Debugging
+
 
     // Agent tab: create a tab and return CDP connection info including target ID
     ipcMain.handle('create-agent-tab', async () => {
@@ -1280,65 +1332,8 @@ function createWindow(): void {
     })
 
     // Enable ad-blocking on webview tags when they are attached
-    win.webContents.on('did-attach-webview', (_, webContents) => {
-        // Enable ghostery ad-blocker on this webview's session (network + cosmetic filters)
-        // Do NOT call setupRequestInterceptor here — it would override ghostery's onBeforeRequest
-        // and disable cosmetic filtering (hiding ad elements in the DOM)
-        if (blocker && adBlockEnabled && !blocker.isBlockingEnabled(webContents.session)) {
-            try {
-                safeEnableBlocking(webContents.session)
-            } catch (err) {
-                console.error('Failed to enable ad-blocker for webview session:', err)
-            }
-        }
-
-        // Cookie listener removed to prevent MaxListenersExceededWarning on shared session
-
-        // Aggressive Popup Blocking
-        webContents.setWindowOpenHandler((details) => {
-            const { url, disposition, features } = details
-
-            // Allow if opened by user gesture (often indicated by features or timing)
-            // But strict ad blockers often block even these if the URL matches an ad pattern
-
-            // Check against ad blocker
-            if (blocker && adBlockEnabled) {
-                // Check if the URL is an ad/tracker
-                const request = Request.fromRawDetails({
-                    url: url,
-                    type: 'popup' as any,
-                    requestId: Date.now().toString(), // Dummy ID
-                    sourceUrl: webContents.getURL()
-                })
-
-                const { match } = blocker.match(request)
-
-                if (match) {
-                    blockedCount++
-                    if (win && !win.isDestroyed()) {
-                        win.webContents.send('ad-blocked', { count: blockedCount, url })
-                    }
-                    return { action: 'deny' }
-                }
-            }
-
-            // If it's a known streaming site popup pattern (often blank or unrelated domain)
-            const currentUrl = webContents.getURL()
-            const isStreamingSite = /footybite|totalsportek|soccerstreams/i.test(currentUrl)
-
-            if (isStreamingSite) {
-                blockedCount++
-                if (win && !win.isDestroyed()) {
-                    win.webContents.send('ad-blocked', { count: blockedCount, url })
-                }
-                return { action: 'deny' }
-            }
-
-            // Normal behavior: Open in new tab
-            createTab(url)
-            return { action: 'deny' }
-        })
-    })
+    // Aggressive Popup Blocking for webviews logic removed to prevent "second handler" crash.
+    // Internal pages (persist:poseidon) do not need ad/popup blocking.
 }
 
 // ============================================

@@ -26,6 +26,13 @@ export default defineConfig({
             },
             {
                 entry: 'src/main/webview-preload.ts',
+                vite: {
+                    build: {
+                        rollupOptions: {
+                            external: ['electron'], // Bundle other dependencies like @ghostery/adblocker-electron-preload
+                        },
+                    },
+                },
                 onstart(args) {
                     args.reload()
                 },
