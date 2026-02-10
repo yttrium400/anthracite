@@ -17,31 +17,15 @@
   <!-- JetBrains Mono - For code/logs -->
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <style>
-    /* Prevent FOUC (Flash of Unstyled Content) */
-    html {
-      background-color: #FFFFFF;
-    }
-
-    /* Smooth loading transition */
-    body {
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-
-    body.loaded {
-      opacity: 1;
-    }
-  </style>
 </head>
 
-<body>
+<body style="opacity:0;transition:opacity 0.2s ease;background:#FFFFFF">
   <div id="root"></div>
   <script type="module" src="/src/renderer/main.tsx"></script>
   <script>
     // Remove loading state once DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
-      document.body.classList.add('loaded');
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.style.opacity = '1';
     });
   </script>
 </body>

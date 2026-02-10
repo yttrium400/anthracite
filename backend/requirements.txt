@@ -5,3 +5,5 @@ playwright==1.41.2
 python-multipart==0.0.9
 langchain-openai
 python-dotenv
+aiohttp
+openai

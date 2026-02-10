@@ -930,28 +930,34 @@
         {
             "id": "19",
             "title": "Phase 2: Fast Path for Simple Agent Actions",
-            "status": "pending",
+            "status": "completed",
             "priority": "medium",
-            "context": "Bypass browser-use's full pipeline for simple commands (navigate, click) by sending CDP commands directly to the Poseidon tab. Only use full browser-use for complex multi-step tasks.",
+            "context": "Bypass browser-use's full pipeline for simple commands (navigate, click) by sending CDP commands directly to the Poseidon tab. Only use full browser-use for complex multi-step tasks. Implemented: cdp_fast.py (direct WebSocket CDP), classifier.py (regex + LLM intent routing), SSE streaming endpoint, frontend EventSource consumer.",
             "created_at": "2026-02-09T10:01:00.000000",
             "subtasks": [
                 {
                     "id": "19.1",
                     "title": "Build lightweight CDP command layer in Python",
-                    "status": "pending",
-                    "context": "Direct CDP calls for navigate, click, type, scroll — no DOM extraction, no screenshots, no LLM. Used for simple one-shot commands."
+                    "status": "completed",
+                    "context": "backend/cdp_fast.py — Direct CDP via aiohttp WebSocket. Functions: navigate, click, type, type_and_submit, scroll, get_url, wait_for, get_page_info. Connects to ws://127.0.0.1:9222/devtools/page/{targetId}."
                 },
                 {
                     "id": "19.2",
                     "title": "Add intent classifier to route simple vs complex tasks",
-                    "status": "pending",
-                    "context": "Quick LLM call or regex to decide: 'go to youtube.com' → fast path, 'find cheapest flight to NYC' → full browser-use pipeline."
+                    "status": "completed",
+                    "context": "backend/classifier.py — Regex-first for obvious patterns (go to X, open X, search X), falls back to gpt-4o-mini LLM call. Returns ClassifiedIntent with action (fast_navigate, fast_search, complex) and params."
                 },
                 {
                     "id": "19.3",
                     "title": "Implement streaming progress updates via WebSocket/SSE",
-                    "status": "pending",
-                    "context": "Replace blocking POST with streaming so frontend shows step-by-step agent progress in real time."
+                    "status": "completed",
+                    "context": "POST /agent/stream SSE endpoint in server.py. Events: classifying, classified, fast_action, agent_starting, step (with next_goal + actions), done, stopped, error. Frontend uses ReadableStream reader to parse SSE events. Agent step callback via register_new_step_callback in browser-use Agent."
+                },
+                {
+                    "id": "19.4",
+                    "title": "Add agent stop/pause/resume controls",
+                    "status": "completed",
+                    "context": "AgentControl class in server.py with asyncio.Event for pause blocking. Endpoints: POST /agent/stop, POST /agent/pause, POST /agent/resume, GET /agent/status. Uses browser-use register_should_stop_callback for graceful stop. Frontend: Pause/Play + Stop buttons in TopBar next to AI button, only visible during agent execution. AbortController cancels SSE fetch on stop."
                 }
             ]
         },

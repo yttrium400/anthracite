@@ -1,5 +1,6 @@
 import os
 import logging
+from typing import Callable, Awaitable, Any
 
 # Increase browser-use event timeouts for Electron CDP (must be set before import)
 os.environ["TIMEOUT_BrowserStartEvent"] = "120"
@@ -110,6 +111,34 @@ async def run_agent_task_logic(instruction: str, cdp_url: str = "http://127.0.0.
         llm=ChatOpenAI(model="gpt-4o", api_key=os.getenv("OPENAI_API_KEY")),
         browser_session=browser_session,
         use_vision='auto',
+    )
+
+    result = await agent.run()
+    return result.final_result or "Task Completed"
+
+
+async def run_agent_task_streaming(
+    instruction: str,
+    cdp_url: str = "http://127.0.0.1:9222",
+    target_id: str | None = None,
+    step_callback: Callable[..., Awaitable[None]] | None = None,
+    should_stop: Callable[..., Awaitable[bool]] | None = None,
+):
+    """Run an agent task with step-by-step streaming via callback."""
+    browser_session = await get_or_create_session(cdp_url)
+
+    if browser_session._cdp_client_root is None:
+        await browser_session.start()
+
+    await _switch_to_agent_tab(browser_session, target_id)
+
+    agent = Agent(
+        task=instruction + "\n\nIMPORTANT: As soon as the task is complete, immediately call the done action with a summary. Do not continue browsing or repeat actions.",
+        llm=ChatOpenAI(model="gpt-4o", api_key=os.getenv("OPENAI_API_KEY")),
+        browser_session=browser_session,
+        use_vision='auto',
+        register_new_step_callback=step_callback,
+        register_should_stop_callback=should_stop,
     )
 
     result = await agent.run()

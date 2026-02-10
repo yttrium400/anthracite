@@ -1,15 +1,69 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from backend.agent import run_agent_task_logic
+from backend.agent import run_agent_task_logic, run_agent_task_streaming
+from backend.classifier import classify
+from backend.cdp_fast import cdp_navigate
 import os
+import json
+import asyncio
+import logging
 
 from fastapi.middleware.cors import CORSMiddleware
 
+logger = logging.getLogger(__name__)
+
 app = FastAPI()
+
+
+class AgentControl:
+    """Global agent control state for stop/pause/resume."""
+
+    def __init__(self):
+        self._stop_requested = False
+        self._pause_event = asyncio.Event()
+        self._pause_event.set()  # Not paused initially
+        self._running = False
+
+    def reset(self):
+        self._stop_requested = False
+        self._pause_event.set()
+        self._running = True
+
+    def stop(self):
+        self._stop_requested = True
+        self._pause_event.set()  # Unpause so the stop can take effect
+
+    def pause(self):
+        self._pause_event.clear()
+
+    def resume(self):
+        self._pause_event.set()
+
+    @property
+    def is_paused(self) -> bool:
+        return not self._pause_event.is_set()
+
+    @property
+    def is_running(self) -> bool:
+        return self._running
+
+    async def should_stop(self) -> bool:
+        # If paused, block here until resumed or stopped
+        await self._pause_event.wait()
+        return self._stop_requested
+
+    def finish(self):
+        self._running = False
+        self._stop_requested = False
+        self._pause_event.set()
+
+
+agent_control = AgentControl()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all origins for local development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,3 +88,146 @@ async def run_agent(task: TaskRequest):
         return {"status": "success", "result": result}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.post("/agent/stop")
+async def stop_agent():
+    agent_control.stop()
+    return {"status": "ok", "message": "Stop requested"}
+
+
+@app.post("/agent/pause")
+async def pause_agent():
+    agent_control.pause()
+    return {"status": "ok", "paused": True}
+
+
+@app.post("/agent/resume")
+async def resume_agent():
+    agent_control.resume()
+    return {"status": "ok", "paused": False}
+
+
+@app.get("/agent/status")
+async def agent_status():
+    return {
+        "running": agent_control.is_running,
+        "paused": agent_control.is_paused,
+    }
+
+
+def _sse_event(data: dict) -> str:
+    """Format a dict as an SSE event."""
+    return f"data: {json.dumps(data)}\n\n"
+
+
+@app.post("/agent/stream")
+async def stream_agent(task: TaskRequest):
+    """SSE streaming endpoint that classifies intent and routes accordingly.
+
+    Fast path: direct CDP commands for simple actions (navigate, search).
+    Complex path: full browser-use pipeline with step-by-step progress.
+    """
+    if not os.environ.get("OPENAI_API_KEY"):
+        async def error_stream():
+            yield _sse_event({"type": "error", "message": "OPENAI_API_KEY not found"})
+        return StreamingResponse(error_stream(), media_type="text/event-stream")
+
+    async def event_stream():
+        try:
+            # Step 1: Classify the intent
+            yield _sse_event({"type": "classifying", "instruction": task.instruction})
+
+            intent = await classify(task.instruction)
+            yield _sse_event({
+                "type": "classified",
+                "action": intent.action,
+                "params": intent.params,
+            })
+
+            # Step 2: Route to fast path or complex path
+            if intent.action == "fast_navigate" and task.target_id:
+                url = intent.params.get("url", "")
+                yield _sse_event({"type": "fast_action", "action": "navigate", "url": url})
+
+                await cdp_navigate(task.target_id, url)
+
+                yield _sse_event({"type": "done", "result": f"Navigated to {url}"})
+
+            else:
+                # Complex path: full browser-use with step streaming
+                agent_control.reset()
+                yield _sse_event({"type": "agent_starting"})
+
+                queue: asyncio.Queue = asyncio.Queue()
+
+                async def step_callback(browser_state, agent_output, step_num):
+                    """Push step info to the SSE queue."""
+                    actions_summary = []
+                    try:
+                        if agent_output and hasattr(agent_output, 'action'):
+                            for a in agent_output.action:
+                                # Extract just the action name and key params safely
+                                action_dict = a.model_dump(exclude_none=True, mode='json')
+                                actions_summary.append(action_dict)
+                    except Exception:
+                        # Fallback: just stringify action names
+                        try:
+                            if agent_output and hasattr(agent_output, 'action'):
+                                for a in agent_output.action:
+                                    actions_summary.append(str(type(a).__name__))
+                        except Exception:
+                            pass
+
+                    await queue.put({
+                        "type": "step",
+                        "step": step_num,
+                        "next_goal": getattr(agent_output, 'next_goal', None) if agent_output else None,
+                        "actions": actions_summary,
+                    })
+
+                # Run agent in background task
+                async def run_agent():
+                    try:
+                        result = await run_agent_task_streaming(
+                            task.instruction,
+                            task.cdp_url,
+                            task.target_id,
+                            step_callback,
+                            should_stop=agent_control.should_stop,
+                        )
+                        await queue.put({"type": "done", "result": result})
+                    except InterruptedError:
+                        await queue.put({"type": "stopped", "result": "Agent stopped by user"})
+                    except Exception as e:
+                        await queue.put({"type": "error", "message": str(e)})
+                    finally:
+                        agent_control.finish()
+
+                agent_task = asyncio.create_task(run_agent())
+
+                # Stream events from queue until done
+                while True:
+                    try:
+                        event = await asyncio.wait_for(queue.get(), timeout=120.0)
+                        yield _sse_event(event)
+                        if event["type"] in ("done", "error", "stopped"):
+                            break
+                    except asyncio.TimeoutError:
+                        yield _sse_event({"type": "error", "message": "Agent timed out"})
+                        agent_task.cancel()
+                        break
+
+                # Ensure agent task is cleaned up
+                if not agent_task.done():
+                    agent_task.cancel()
+                    try:
+                        await agent_task
+                    except asyncio.CancelledError:
+                        pass
+
+        except Exception as e:
+            logger.error(f"Stream error: {e}")
+            yield _sse_event({"type": "error", "message": str(e)})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")

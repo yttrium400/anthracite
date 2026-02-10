@@ -14,6 +14,9 @@ import {
     Search,
     ChevronDown,
     Check,
+    Square,
+    Pause,
+    Play,
 } from 'lucide-react';
 import { getIconComponent } from './IconPicker';
 import type { Realm, ThemeColor } from '../../shared/types';
@@ -106,6 +109,9 @@ export function TopBar({
     const [isFocused, setIsFocused] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [isAIProcessing, setIsAIProcessing] = useState(false);
+    const [agentStatus, setAgentStatus] = useState<string>('');
+    const [isAgentPaused, setIsAgentPaused] = useState(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Autocomplete state
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -338,31 +344,113 @@ export function TopBar({
     };
 
 
+    const handleStopAgent = async () => {
+        try {
+            await fetch('http://127.0.0.1:8000/agent/stop', { method: 'POST' });
+            abortControllerRef.current?.abort();
+        } catch (err) {
+            console.error('Failed to stop agent:', err);
+        }
+    };
+
+    const handlePauseResumeAgent = async () => {
+        try {
+            if (isAgentPaused) {
+                await fetch('http://127.0.0.1:8000/agent/resume', { method: 'POST' });
+                setIsAgentPaused(false);
+                setAgentStatus(prev => prev.replace(' (Paused)', '') || 'Resuming...');
+            } else {
+                await fetch('http://127.0.0.1:8000/agent/pause', { method: 'POST' });
+                setIsAgentPaused(true);
+                setAgentStatus(prev => prev ? `${prev} (Paused)` : 'Paused');
+            }
+        } catch (err) {
+            console.error('Failed to pause/resume agent:', err);
+        }
+    };
+
     const handleRunAgent = async () => {
         if (!inputValue.trim()) return;
 
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         setIsAIProcessing(true);
+        setAgentStatus('Starting...');
+        setIsAgentPaused(false);
         try {
             // 1. Create a new agent tab inside Poseidon and get CDP info
             const agentTab = await (window as any).electron.agent.createAgentTab();
 
-            // 2. Run the agent task, connected to Poseidon via CDP
-            const response = await fetch('http://127.0.0.1:8000/agent/run', {
+            // 2. Stream agent task via SSE
+            const response = await fetch('http://127.0.0.1:8000/agent/stream', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     instruction: inputValue.trim(),
                     cdp_url: agentTab.cdpUrl || 'http://127.0.0.1:9222',
                     target_id: agentTab.targetId || null,
                 }),
+                signal: controller.signal,
             });
-            const data = await response.json();
-        } catch (error) {
-            console.error('Failed to run agent:', error);
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+
+            if (reader) {
+                let buffer = '';
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        try {
+                            const event = JSON.parse(line.slice(6));
+                            switch (event.type) {
+                                case 'classifying':
+                                    setAgentStatus('Classifying...');
+                                    break;
+                                case 'classified':
+                                    setAgentStatus(event.action === 'fast_navigate' ? 'Fast navigate' : 'Thinking...');
+                                    break;
+                                case 'fast_action':
+                                    setAgentStatus(`Navigating to ${event.url}`);
+                                    break;
+                                case 'agent_starting':
+                                    setAgentStatus('Agent starting...');
+                                    break;
+                                case 'step':
+                                    setAgentStatus(event.next_goal || `Step ${event.step}...`);
+                                    break;
+                                case 'done':
+                                    setAgentStatus('');
+                                    break;
+                                case 'stopped':
+                                    setAgentStatus('Stopped');
+                                    break;
+                                case 'error':
+                                    setAgentStatus('');
+                                    console.error('Agent error:', event.message);
+                                    break;
+                            }
+                        } catch { /* skip malformed lines */ }
+                    }
+                }
+            }
+        } catch (error: any) {
+            if (error?.name !== 'AbortError') {
+                console.error('Failed to run agent:', error);
+            }
         } finally {
             setIsAIProcessing(false);
+            setAgentStatus('');
+            setIsAgentPaused(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -607,9 +695,9 @@ export function TopBar({
                             {isLoading ? <X size={18} /> : <RotateCw size={18} />}
                         </button>
                     </div>
-                    {/* AI Indicator */}
-                    <div className="flex items-center gap-2 pr-3">
-                        <div className="h-5 w-px bg-border" />
+                    {/* AI Indicator + Controls */}
+                    <div className="flex items-center gap-1 pr-3">
+                        <div className="h-5 w-px bg-border mr-1" />
                         <button
                             type="button"
                             onClick={handleRunAgent}
@@ -627,8 +715,33 @@ export function TopBar({
                             ) : (
                                 <Sparkles className="h-3.5 w-3.5 text-brand" />
                             )}
-                            <span className="hidden sm:inline">{isAIProcessing ? 'Running...' : 'AI'}</span>
+                            <span className="hidden sm:inline">{isAIProcessing ? (agentStatus || 'Running...') : 'AI'}</span>
                         </button>
+                        {/* Pause/Play + Stop buttons — only visible when agent is running */}
+                        {isAIProcessing && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={handlePauseResumeAgent}
+                                    className="p-1 rounded-md text-text-secondary hover:bg-surface-tertiary hover:text-text-primary transition-colors"
+                                    title={isAgentPaused ? "Resume agent" : "Pause agent"}
+                                >
+                                    {isAgentPaused ? (
+                                        <Play className="h-3.5 w-3.5 text-success" />
+                                    ) : (
+                                        <Pause className="h-3.5 w-3.5 text-warning" />
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleStopAgent}
+                                    className="p-1 rounded-md text-text-secondary hover:bg-error/10 hover:text-error transition-colors"
+                                    title="Stop agent"
+                                >
+                                    <Square className="h-3.5 w-3.5 text-error" />
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 

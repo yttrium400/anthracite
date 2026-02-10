@@ -130,11 +130,24 @@ module.exports = {
                     '0%, 100%': { backgroundPosition: '0% 50%' },
                     '50%': { backgroundPosition: '100% 50%' },
                 },
+                float: {
+                    '0%, 100%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-10px)' },
+                },
+                breathe: {
+                    '0%, 100%': { opacity: '1' },
+                    '50%': { opacity: '0.8' },
+                },
             },
             transitionTimingFunction: {
                 'bounce-in': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
                 'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
                 'spring': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                'material': 'cubic-bezier(0.4, 0, 0.2, 1)',
+            },
+            backgroundImage: {
+                'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                'gradient-conic': 'conic-gradient(from 0deg, var(--tw-gradient-stops))',
             },
         },
     },
