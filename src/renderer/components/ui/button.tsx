@@ -4,15 +4,15 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 
 const buttonVariants = cva(
-    "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-200 ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+    "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-200 ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0B] disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
     {
         variants: {
             variant: {
-                default: "bg-brand text-white hover:bg-brand-dark hover:shadow-brand",
-                destructive: "bg-error text-white hover:bg-error/90",
-                outline: "border border-border bg-white hover:bg-surface-tertiary text-text-primary hover:border-border-strong",
-                secondary: "bg-surface-tertiary text-text-primary hover:bg-surface-secondary border border-border",
-                ghost: "hover:bg-surface-tertiary text-text-secondary hover:text-text-primary",
+                default: "bg-brand text-white hover:bg-brand-dark hover:shadow-glow",
+                destructive: "bg-error text-white hover:bg-error/90 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]",
+                outline: "border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.06] text-text-primary hover:border-white/[0.12]",
+                secondary: "bg-white/[0.06] text-text-primary hover:bg-white/[0.08] border border-white/[0.08]",
+                ghost: "hover:bg-white/[0.06] text-text-secondary hover:text-text-primary",
                 link: "text-brand underline-offset-4 hover:underline",
             },
             size: {

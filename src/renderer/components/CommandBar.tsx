@@ -235,7 +235,7 @@ export function CommandBar({ onRun, isRunning, status = 'idle' }: CommandBarProp
                     className={cn(
                         "absolute -inset-1 rounded-3xl transition-all duration-500",
                         isFocused
-                            ? "bg-gradient-to-r from-brand/20 via-accent-violet/20 to-brand/20 blur-xl opacity-100"
+                            ? "bg-gradient-to-r from-brand/15 via-accent-violet/15 to-brand/15 blur-xl opacity-100"
                             : "opacity-0"
                     )}
                 />
@@ -243,8 +243,8 @@ export function CommandBar({ onRun, isRunning, status = 'idle' }: CommandBarProp
                 {/* Card Container */}
                 <div
                     className={cn(
-                        "relative glass-elevated overflow-hidden transition-all duration-300",
-                        isFocused ? "shadow-large ring-1 ring-brand/20" : "shadow-medium",
+                        "relative bg-white/[0.04] backdrop-blur-2xl rounded-2xl border border-white/[0.08] overflow-hidden transition-all duration-300",
+                        isFocused ? "shadow-large ring-1 ring-brand/20 border-brand/30" : "shadow-medium",
                         isRunning && "ring-1 ring-brand/30",
                         showSuggestions && "rounded-b-none"
                     )}
@@ -255,8 +255,8 @@ export function CommandBar({ onRun, isRunning, status = 'idle' }: CommandBarProp
                         <div className={cn(
                             "flex items-center justify-center h-10 w-10 rounded-xl shrink-0 transition-all duration-300",
                             isRunning
-                                ? "bg-gradient-to-br from-brand to-accent-violet shadow-brand"
-                                : "bg-surface-tertiary"
+                                ? "bg-gradient-to-br from-brand to-accent-violet shadow-glow"
+                                : "bg-white/[0.06]"
                         )}>
                             <Sparkles className={cn(
                                 "h-5 w-5 transition-colors",
@@ -292,7 +292,7 @@ export function CommandBar({ onRun, isRunning, status = 'idle' }: CommandBarProp
                     </div>
 
                     {/* Bottom Section - Actions */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-surface-secondary/50 border-t border-border/40">
+                    <div className="flex items-center justify-between px-4 py-3 bg-white/[0.02] border-t border-white/[0.06]">
                         {/* Left Actions */}
                         <div className="flex items-center gap-1">
                             <button
@@ -309,10 +309,10 @@ export function CommandBar({ onRun, isRunning, status = 'idle' }: CommandBarProp
                             >
                                 <Mic className="h-4 w-4" />
                             </button>
-                            <div className="h-5 w-px bg-border mx-1" />
+                            <div className="h-5 w-px bg-white/[0.08] mx-1" />
                             <button
                                 type="button"
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:bg-surface-tertiary transition-colors"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:bg-white/[0.06] transition-colors"
                             >
                                 <span>GPT-4o</span>
                                 <ChevronDown className="h-3 w-3" />
@@ -338,9 +338,9 @@ export function CommandBar({ onRun, isRunning, status = 'idle' }: CommandBarProp
                                     "flex items-center justify-center gap-2 h-9 rounded-xl font-semibold text-sm transition-all duration-200",
                                     "disabled:opacity-40 disabled:cursor-not-allowed",
                                     isRunning
-                                        ? "bg-error/10 text-error hover:bg-error/20 px-4"
-                                        : "bg-brand text-white hover:bg-brand-dark hover:shadow-brand active:scale-[0.98] px-4",
-                                    !input.trim() && !isRunning && "bg-surface-tertiary text-text-tertiary hover:bg-surface-tertiary"
+                                        ? "bg-error/15 text-error hover:bg-error/25 px-4"
+                                        : "bg-brand text-white hover:bg-brand-dark hover:shadow-glow active:scale-[0.98] px-4",
+                                    !input.trim() && !isRunning && "bg-white/[0.06] text-text-tertiary hover:bg-white/[0.06]"
                                 )}
                             >
                                 {isRunning ? (
@@ -363,7 +363,7 @@ export function CommandBar({ onRun, isRunning, status = 'idle' }: CommandBarProp
                 {showSuggestions && suggestions.length > 0 && (
                     <div
                         ref={suggestionsRef}
-                        className="absolute z-50 w-full bg-surface/95 backdrop-blur-xl border border-t-0 border-border/50 rounded-b-2xl shadow-large overflow-hidden"
+                        className="absolute z-50 w-full bg-[#1A1A1D]/95 backdrop-blur-xl border border-t-0 border-white/[0.08] rounded-b-2xl shadow-large overflow-hidden"
                     >
                         {suggestions.map((suggestion, index) => (
                             <button
@@ -372,12 +372,12 @@ export function CommandBar({ onRun, isRunning, status = 'idle' }: CommandBarProp
                                 onClick={() => handleSelectSuggestion(suggestion)}
                                 className={cn(
                                     "flex items-center gap-3 w-full px-4 py-3 text-left transition-colors",
-                                    "hover:bg-surface-secondary/80",
-                                    index === selectedIndex && "bg-surface-secondary"
+                                    "hover:bg-white/[0.06]",
+                                    index === selectedIndex && "bg-white/[0.06]"
                                 )}
                             >
                                 {/* Icon */}
-                                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-surface-tertiary shrink-0">
+                                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-white/[0.06] shrink-0">
                                     {suggestion.type === 'history' && suggestion.favicon ? (
                                         <img
                                             src={suggestion.favicon}
@@ -408,7 +408,7 @@ export function CommandBar({ onRun, isRunning, status = 'idle' }: CommandBarProp
 
                                 {/* Badge */}
                                 {suggestion.type === 'history' && suggestion.visitCount && suggestion.visitCount > 1 && (
-                                    <span className="text-[10px] text-text-tertiary bg-surface-tertiary px-1.5 py-0.5 rounded">
+                                    <span className="text-[10px] text-text-tertiary bg-white/[0.06] px-1.5 py-0.5 rounded">
                                         {suggestion.visitCount} visits
                                     </span>
                                 )}

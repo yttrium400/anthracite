@@ -6,29 +6,29 @@ import type { Realm, Dock as DockType, ThemeColor } from '../../shared/types';
 
 // Color mappings
 const COLOR_BG_MAP: Record<ThemeColor, string> = {
-    blue: 'bg-blue-500/10',
-    purple: 'bg-purple-500/10',
-    pink: 'bg-pink-500/10',
-    red: 'bg-red-500/10',
-    orange: 'bg-orange-500/10',
-    yellow: 'bg-yellow-500/10',
-    green: 'bg-green-500/10',
-    teal: 'bg-teal-500/10',
-    cyan: 'bg-cyan-500/10',
-    gray: 'bg-gray-500/10',
+    blue: 'bg-blue-500/15',
+    purple: 'bg-purple-500/15',
+    pink: 'bg-pink-500/15',
+    red: 'bg-red-500/15',
+    orange: 'bg-orange-500/15',
+    yellow: 'bg-yellow-500/15',
+    green: 'bg-green-500/15',
+    teal: 'bg-teal-500/15',
+    cyan: 'bg-cyan-500/15',
+    gray: 'bg-gray-500/15',
 };
 
 const COLOR_TEXT_MAP: Record<ThemeColor, string> = {
-    blue: 'text-blue-600',
-    purple: 'text-purple-600',
-    pink: 'text-pink-600',
-    red: 'text-red-600',
-    orange: 'text-orange-600',
-    yellow: 'text-yellow-600',
-    green: 'text-green-600',
-    teal: 'text-teal-600',
-    cyan: 'text-cyan-600',
-    gray: 'text-gray-600',
+    blue: 'text-blue-400',
+    purple: 'text-purple-400',
+    pink: 'text-pink-400',
+    red: 'text-red-400',
+    orange: 'text-orange-400',
+    yellow: 'text-yellow-400',
+    green: 'text-green-400',
+    teal: 'text-teal-400',
+    cyan: 'text-cyan-400',
+    gray: 'text-gray-400',
 };
 
 interface Tab {
@@ -228,7 +228,7 @@ export function RealmSearch({ isOpen, onClose }: RealmSearchProps) {
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] animate-in fade-in duration-150"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] animate-in fade-in duration-150"
                 onClick={onClose}
             />
 
@@ -237,14 +237,14 @@ export function RealmSearch({ isOpen, onClose }: RealmSearchProps) {
                 <div
                     className={cn(
                         "w-full max-w-xl mx-4",
-                        "bg-white/95 backdrop-blur-xl rounded-2xl",
-                        "border border-border/60 shadow-2xl",
+                        "bg-[#1A1A1D]/95 backdrop-blur-xl rounded-2xl",
+                        "border border-white/[0.08] shadow-2xl",
                         "overflow-hidden",
                         "animate-in fade-in zoom-in-95 duration-150"
                     )}
                 >
                     {/* Search Input */}
-                    <div className="flex items-center gap-3 px-4 py-3 border-b border-border/40">
+                    <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
                         <Search className="h-5 w-5 text-text-tertiary shrink-0" />
                         <input
                             ref={inputRef}
@@ -290,12 +290,12 @@ export function RealmSearch({ isOpen, onClose }: RealmSearchProps) {
                                         "flex items-center gap-3 w-full px-4 py-3 text-left",
                                         "transition-colors duration-100",
                                         index === selectedIndex
-                                            ? "bg-brand/5 border-l-2 border-brand"
-                                            : "hover:bg-surface-secondary border-l-2 border-transparent"
+                                            ? "bg-brand/10 border-l-2 border-brand"
+                                            : "hover:bg-white/[0.06] border-l-2 border-transparent"
                                     )}
                                 >
                                     {/* Favicon */}
-                                    <div className="h-8 w-8 rounded-lg bg-surface-tertiary flex items-center justify-center shrink-0 overflow-hidden">
+                                    <div className="h-8 w-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0 overflow-hidden">
                                         {result.isLoading ? (
                                             <Loader2 className="h-4 w-4 text-brand animate-spin" />
                                         ) : getFaviconUrl(result) ? (
@@ -352,7 +352,7 @@ export function RealmSearch({ isOpen, onClose }: RealmSearchProps) {
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between px-4 py-2 border-t border-border/40 bg-surface-secondary/50">
+                    <div className="flex items-center justify-between px-4 py-2 border-t border-white/[0.06] bg-white/[0.02]">
                         <div className="flex items-center gap-3 text-xs text-text-tertiary">
                             <span className="flex items-center gap-1">
                                 <kbd className="kbd text-[9px]">↑</kbd>

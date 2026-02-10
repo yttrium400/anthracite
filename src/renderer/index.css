@@ -3,90 +3,12 @@
 @tailwind utilities;
 
 /* ============================================
-   POSEIDON - Premium Light Theme
-   Inspired by Arc, Dia, and Comet browsers
+   POSEIDON - Dark & Moody Premium Theme
    ============================================ */
 
 @layer base {
-    :root {
-        /* Core surfaces */
-        --background: 0 0% 100%;
-        --foreground: 0 0% 10%;
-
-        /* Component surfaces */
-        --card: 0 0% 100%;
-        --card-foreground: 0 0% 10%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 10%;
-
-        /* Primary brand */
-        --primary: 239 84% 67%;
-        --primary-foreground: 0 0% 100%;
-
-        /* Secondary */
-        --secondary: 0 0% 96%;
-        --secondary-foreground: 0 0% 10%;
-
-        /* Muted */
-        --muted: 0 0% 96%;
-        --muted-foreground: 0 0% 45%;
-
-        /* Accent */
-        --accent: 0 0% 96%;
-        --accent-foreground: 0 0% 10%;
-
-        /* Destructive */
-        --destructive: 0 84% 60%;
-        --destructive-foreground: 0 0% 100%;
-
-        /* Borders and inputs */
-        --border: 0 0% 91%;
-        --input: 0 0% 91%;
-        --ring: 239 84% 67%;
-
-        /* Border radius */
-        --radius: 0.75rem;
-    }
- 
-    .dark {
-        /* Core surfaces */
-        --background: 222.2 84% 4.9%;
-        --foreground: 210 40% 98%;
- 
-        /* Component surfaces */
-        --card: 222.2 84% 4.9%;
-        --card-foreground: 210 40% 98%;
-        --popover: 222.2 84% 4.9%;
-        --popover-foreground: 210 40% 98%;
- 
-        /* Primary brand */
-        --primary: 217.2 91.2% 59.8%;
-        --primary-foreground: 222.2 47.4% 11.2%;
- 
-        /* Secondary */
-        --secondary: 217.2 32.6% 17.5%;
-        --secondary-foreground: 210 40% 98%;
- 
-        /* Muted */
-        --muted: 217.2 32.6% 17.5%;
-        --muted-foreground: 215 20.2% 65.1%;
- 
-        /* Accent */
-        --accent: 217.2 32.6% 17.5%;
-        --accent-foreground: 210 40% 98%;
- 
-        /* Destructive */
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 210 40% 98%;
- 
-        /* Borders and inputs */
-        --border: 217.2 32.6% 17.5%;
-        --input: 217.2 32.6% 17.5%;
-        --ring: 224.3 76.3% 48%;
-    }
-
     * {
-        @apply border-border;
+        border-color: rgba(255, 255, 255, 0.08);
     }
 
     html {
@@ -94,6 +16,7 @@
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        color-scheme: dark;
     }
 
     body {
@@ -101,12 +24,13 @@
         font-feature-settings: "rlig" 1, "calt" 1;
     }
 
-    /* Premium selection styling */
+    /* Selection styling — brand glow */
     ::selection {
-        @apply bg-brand/20 text-brand-dark;
+        background: rgba(99, 102, 241, 0.3);
+        color: #FAFAFA;
     }
 
-    /* Custom scrollbar - minimal and elegant */
+    /* Custom scrollbar — dark */
     ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -117,15 +41,15 @@
     }
 
     ::-webkit-scrollbar-thumb {
-        @apply bg-border-strong/50 rounded-full;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 9999px;
         transition: background 0.2s ease;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        @apply bg-border-strong;
+        background: rgba(255, 255, 255, 0.2);
     }
 
-    /* Hide scrollbar when not hovering (macOS style) */
     .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
@@ -135,7 +59,6 @@
         scrollbar-width: none;
     }
 
-    /* Thin scrollbar variant */
     .thin-scrollbar::-webkit-scrollbar {
         width: 4px;
     }
@@ -143,29 +66,22 @@
 
 @layer components {
     /* ============================================
-       Glass Morphism Components
+       Glass Morphism — Dark
        ============================================ */
 
     .glass-panel {
-        @apply bg-white/80 backdrop-blur-xl border-r border-border/60;
-        box-shadow:
-            1px 0 0 0 rgba(255, 255, 255, 0.8),
-            4px 0 24px -4px rgba(0, 0, 0, 0.04);
+        @apply bg-[#111113]/80 backdrop-blur-2xl border-r border-white/[0.06];
+        box-shadow: 1px 0 0 0 rgba(255, 255, 255, 0.03), 4px 0 24px -4px rgba(0, 0, 0, 0.3);
     }
 
     .glass-card {
-        @apply bg-white/90 backdrop-blur-xl rounded-2xl border border-border/50;
-        box-shadow:
-            0 1px 3px rgba(0, 0, 0, 0.02),
-            0 4px 12px rgba(0, 0, 0, 0.04);
+        @apply bg-white/[0.04] backdrop-blur-2xl rounded-2xl border border-white/[0.08];
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .glass-elevated {
-        @apply bg-white backdrop-blur-xl rounded-2xl border border-border/40;
-        box-shadow:
-            0 2px 4px rgba(0, 0, 0, 0.02),
-            0 8px 24px rgba(0, 0, 0, 0.06),
-            0 24px 48px rgba(0, 0, 0, 0.04);
+        @apply bg-white/[0.04] backdrop-blur-2xl rounded-2xl border border-white/[0.08];
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.3), 0 24px 48px rgba(0, 0, 0, 0.2);
     }
 
     /* ============================================
@@ -186,9 +102,7 @@
 
     .interactive-lift:hover {
         transform: translateY(-1px);
-        box-shadow:
-            0 4px 12px rgba(0, 0, 0, 0.06),
-            0 8px 24px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
     }
 
     /* ============================================
@@ -198,11 +112,11 @@
     .nav-item {
         @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
                text-text-secondary transition-all duration-200 ease-smooth
-               hover:bg-surface-tertiary hover:text-text-primary;
+               hover:bg-white/[0.06] hover:text-text-primary;
     }
 
     .nav-item-active {
-        @apply bg-brand-muted text-brand-dark font-semibold;
+        @apply bg-brand-muted text-brand-light font-semibold;
     }
 
     .nav-item-active .nav-icon {
@@ -221,23 +135,23 @@
     }
 
     .btn-secondary {
-        @apply bg-surface-tertiary text-text-primary font-medium rounded-xl px-4 py-2.5
-               border border-border transition-all duration-200 ease-smooth
-               hover:bg-surface-secondary hover:border-border-strong
+        @apply bg-white/[0.06] text-text-primary font-medium rounded-xl px-4 py-2.5
+               border border-white/[0.08] transition-all duration-200 ease-smooth
+               hover:bg-white/[0.1] hover:border-white/[0.12]
                active:scale-[0.98];
     }
 
     .btn-ghost {
         @apply text-text-secondary font-medium rounded-xl px-4 py-2.5
                transition-all duration-200 ease-smooth
-               hover:bg-surface-tertiary hover:text-text-primary
+               hover:bg-white/[0.06] hover:text-text-primary
                active:scale-[0.98];
     }
 
     .btn-icon {
         @apply flex items-center justify-center w-9 h-9 rounded-xl
                text-text-secondary transition-all duration-200 ease-smooth
-               hover:bg-surface-tertiary hover:text-text-primary
+               hover:bg-white/[0.06] hover:text-text-primary
                active:scale-[0.95];
     }
 
@@ -246,11 +160,11 @@
        ============================================ */
 
     .input-field {
-        @apply w-full bg-surface-secondary border border-border rounded-xl px-4 py-3
+        @apply w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3
                text-text-primary placeholder:text-text-tertiary
                transition-all duration-200 ease-smooth
-               focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10
-               hover:border-border-strong;
+               focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/30 focus:bg-white/[0.08]
+               hover:border-white/[0.12];
     }
 
     .input-large {
@@ -262,20 +176,17 @@
        ============================================ */
 
     .card {
-        @apply bg-white rounded-2xl border border-border/60 p-4;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        @apply bg-white/[0.03] rounded-2xl border border-white/[0.06] p-4;
     }
 
     .card-elevated {
-        @apply bg-white rounded-2xl border border-border/40 p-4;
-        box-shadow:
-            0 1px 2px rgba(0, 0, 0, 0.02),
-            0 4px 16px rgba(0, 0, 0, 0.04);
+        @apply bg-white/[0.04] rounded-2xl border border-white/[0.08] p-4;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.15);
     }
 
     .card-interactive {
         @apply card cursor-pointer transition-all duration-200 ease-smooth
-               hover:border-border-strong hover:shadow-soft;
+               hover:border-white/[0.12] hover:bg-white/[0.05];
     }
 
     /* ============================================
@@ -308,8 +219,7 @@
     .kbd {
         @apply inline-flex items-center justify-center px-1.5 py-0.5
                text-[10px] font-medium text-text-tertiary
-               bg-surface-tertiary border border-border rounded-md
-               shadow-inner-soft;
+               bg-white/[0.06] border border-white/[0.08] rounded-md;
     }
 
     /* ============================================
@@ -322,7 +232,7 @@
     }
 
     .badge-brand {
-        @apply bg-brand-muted text-brand-dark;
+        @apply bg-brand-muted text-brand-light;
     }
 
     .badge-success {
@@ -342,11 +252,11 @@
        ============================================ */
 
     .divider {
-        @apply h-px bg-border;
+        @apply h-px bg-white/[0.06];
     }
 
     .divider-vertical {
-        @apply w-px bg-border;
+        @apply w-px bg-white/[0.06];
     }
 
     /* ============================================
@@ -354,12 +264,12 @@
        ============================================ */
 
     .skeleton {
-        @apply bg-gradient-to-r from-surface-tertiary via-surface-secondary to-surface-tertiary
+        @apply bg-gradient-to-r from-white/[0.04] via-white/[0.08] to-white/[0.04]
                bg-[length:200%_100%] animate-shimmer rounded-lg;
     }
 
     .loading-spinner {
-        @apply w-5 h-5 border-2 border-border border-t-brand rounded-full animate-spin;
+        @apply w-5 h-5 border-2 border-white/[0.1] border-t-brand rounded-full animate-spin;
     }
 
     /* ============================================
@@ -368,7 +278,7 @@
 
     .tooltip {
         @apply absolute z-50 px-2.5 py-1.5 text-xs font-medium
-               bg-text-primary text-white rounded-lg shadow-medium
+               bg-surface-elevated text-text-primary rounded-lg shadow-medium border border-white/[0.08]
                opacity-0 pointer-events-none transition-opacity duration-200;
     }
 
@@ -402,25 +312,13 @@
        Background Utilities
        ============================================ */
 
-    /* Premium subtle gradient background */
-    .bg-gradient-subtle {
-        background: linear-gradient(
-            135deg,
-            #FFFFFF 0%,
-            #FAFAFA 25%,
-            #F8FAFC 50%,
-            #F1F5F9 75%,
-            #FFFFFF 100%
-        );
-    }
-
-    /* Mesh gradient - light version */
-    .bg-mesh-light {
-        background-color: #FFFFFF;
+    /* Dark mesh gradient */
+    .bg-mesh-dark {
+        background-color: #0A0A0B;
         background-image:
-            radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0%, transparent 50%),
-            radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.03) 0%, transparent 50%),
-            radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.02) 0%, transparent 50%);
+            radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+            radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
     }
 
     /* Noise texture overlay */
@@ -433,7 +331,7 @@
         position: absolute;
         inset: 0;
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-        opacity: 0.02;
+        opacity: 0.015;
         pointer-events: none;
     }
 
@@ -444,8 +342,8 @@
     .border-gradient {
         border: 1px solid transparent;
         background:
-            linear-gradient(white, white) padding-box,
-            linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2)) border-box;
+            linear-gradient(#111113, #111113) padding-box,
+            linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3)) border-box;
     }
 
     /* ============================================
@@ -453,11 +351,11 @@
        ============================================ */
 
     .focus-ring {
-        @apply focus:outline-none focus:ring-2 focus:ring-brand/20 focus:ring-offset-2 focus:ring-offset-white;
+        @apply focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2 focus:ring-offset-surface;
     }
 
     .focus-ring-inset {
-        @apply focus:outline-none focus:ring-2 focus:ring-brand/20 focus:ring-inset;
+        @apply focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-inset;
     }
 
     /* ============================================
@@ -483,11 +381,11 @@
        ============================================ */
 
     .shadow-brand {
-        box-shadow: 0 4px 14px -4px rgba(99, 102, 241, 0.25);
+        box-shadow: 0 4px 14px -4px rgba(99, 102, 241, 0.4);
     }
 
     .shadow-brand-lg {
-        box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.3);
+        box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.5);
     }
 
     /* ============================================
@@ -536,7 +434,7 @@
     content: '';
     position: absolute;
     inset: -2px;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
     border-radius: inherit;
     filter: blur(20px);
     opacity: 0;

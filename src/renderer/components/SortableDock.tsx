@@ -16,29 +16,29 @@ import type { Dock as DockType, ThemeColor } from '../../shared/types';
 
 // Color mappings
 const COLOR_BG_MAP: Record<ThemeColor, string> = {
-    blue: 'bg-blue-500/10',
-    purple: 'bg-purple-500/10',
-    pink: 'bg-pink-500/10',
-    red: 'bg-red-500/10',
-    orange: 'bg-orange-500/10',
-    yellow: 'bg-yellow-500/10',
-    green: 'bg-green-500/10',
-    teal: 'bg-teal-500/10',
-    cyan: 'bg-cyan-500/10',
-    gray: 'bg-gray-500/10',
+    blue: 'bg-blue-500/15',
+    purple: 'bg-purple-500/15',
+    pink: 'bg-pink-500/15',
+    red: 'bg-red-500/15',
+    orange: 'bg-orange-500/15',
+    yellow: 'bg-yellow-500/15',
+    green: 'bg-green-500/15',
+    teal: 'bg-teal-500/15',
+    cyan: 'bg-cyan-500/15',
+    gray: 'bg-gray-500/15',
 };
 
 const COLOR_TEXT_MAP: Record<ThemeColor, string> = {
-    blue: 'text-blue-600',
-    purple: 'text-purple-600',
-    pink: 'text-pink-600',
-    red: 'text-red-600',
-    orange: 'text-orange-600',
-    yellow: 'text-yellow-600',
-    green: 'text-green-600',
-    teal: 'text-teal-600',
-    cyan: 'text-cyan-600',
-    gray: 'text-gray-600',
+    blue: 'text-blue-400',
+    purple: 'text-purple-400',
+    pink: 'text-pink-400',
+    red: 'text-red-400',
+    orange: 'text-orange-400',
+    yellow: 'text-yellow-400',
+    green: 'text-green-400',
+    teal: 'text-teal-400',
+    cyan: 'text-cyan-400',
+    gray: 'text-gray-400',
 };
 
 const COLOR_BORDER_MAP: Record<ThemeColor, string> = {
@@ -221,7 +221,7 @@ export function SortableDock({
                         "opacity-0 group-hover:opacity-100",
                         "h-6 w-6 rounded-md flex items-center justify-center",
                         "transition-all duration-200",
-                        "hover:bg-white/50",
+                        "hover:bg-white/[0.06]",
                         textColor
                     )}
                     title="Add tab to dock"
@@ -309,7 +309,7 @@ export function DockDragOverlay({ dock, tabCount }: { dock: DockType; tabCount: 
     return (
         <div className={cn(
             "flex items-center gap-2 px-3 py-2.5 rounded-xl",
-            "bg-white shadow-xl border border-brand/30",
+            "bg-[#1A1A1D] shadow-xl border border-brand/30",
             "pointer-events-none w-[260px]",
             bgColor
         )}>

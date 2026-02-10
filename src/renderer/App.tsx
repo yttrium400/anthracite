@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { TopBar } from './components/TopBar';
 import { Sidebar } from './components/Sidebar';
 import { HomePage } from './components/HomePage';
@@ -109,7 +110,7 @@ const WebviewController = React.memo(({ tab, isActive, lastWebUrl, onUpdate, onM
     return (
         <div
             className={cn(
-                "absolute inset-0 bg-white",
+                "absolute inset-0 bg-[#0A0A0B]",
                 isActive ? "z-10" : "z-0 pointer-events-none opacity-0"
             )}
         >
@@ -446,7 +447,7 @@ function App() {
     }, []);
 
     return (
-        <div className="h-screen w-full bg-surface overflow-hidden font-sans flex flex-col">
+        <div className="h-screen w-full bg-[#0A0A0B] overflow-hidden font-sans flex flex-col">
             {/* Top Navigation Bar */}
             <TopBar
                 isSidebarPinned={isSidebarPinned}
@@ -467,14 +468,16 @@ function App() {
             />
 
             {/* Main Content Area */}
-            <main className={cn(
-                "flex-1 relative transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-                isSidebarPinned && "ml-[300px]" // 280px sidebar + 20px gap
-            )}>
-
+            <motion.main
+                className="flex-1 relative"
+                animate={{
+                    marginLeft: isSidebarPinned ? 300 : 0,
+                }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
                 {/* Loading state */}
                 {!isReady ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-surface z-10">
+                    <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A0B] z-10">
                         <div className="flex flex-col items-center gap-4">
                             <div className="loading-spinner w-8 h-8" />
                             <p className="text-sm text-text-tertiary">Loading...</p>
@@ -484,19 +487,51 @@ function App() {
                     /* Webviews and Internal Pages Container */
                     <div className="relative w-full h-full">
                         {/* Internal Pages - z-20 to render above hidden webviews */}
-                        {isSettingsPage && <div className="absolute inset-0 z-20"><SettingsPage /></div>}
-                        {isHomePage && <div className="absolute inset-0 z-20"><HomePage /></div>}
-                        {isInternalPage && !isHomePage && !isSettingsPage && <div className="absolute inset-0 z-20"><HomePage /></div>}
+                        <AnimatePresence mode="wait">
+                            {isSettingsPage && (
+                                <motion.div
+                                    key="settings"
+                                    className="absolute inset-0 z-20"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <SettingsPage />
+                                </motion.div>
+                            )}
+                            {isHomePage && (
+                                <motion.div
+                                    key="home"
+                                    className="absolute inset-0 z-20"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <HomePage />
+                                </motion.div>
+                            )}
+                            {isInternalPage && !isHomePage && !isSettingsPage && (
+                                <motion.div
+                                    key="internal"
+                                    className="absolute inset-0 z-20"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <HomePage />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* Browser Views */}
                         {tabs.map(tab => {
-                            // Render WebviewController for tabs with web content,
-                            // OR tabs that previously had web content (to preserve history for back/forward)
                             const hasWebContent = !tab.url.startsWith('poseidon://');
                             const hadWebContent = tabsWithWebview.has(tab.id);
                             if (!hasWebContent && !hadWebContent) return null;
 
-                            // isActive: only show webview when it's the active tab AND not on an internal page
                             const isWebviewActive = activeTabId === tab.id && hasWebContent;
 
                             return (
@@ -515,7 +550,7 @@ function App() {
                         })}
                     </div>
                 )}
-            </main>
+            </motion.main>
 
             {/* Swipe Navigation */}
             <SwipeNavigator

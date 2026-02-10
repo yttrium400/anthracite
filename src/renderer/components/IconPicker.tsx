@@ -124,8 +124,8 @@ export function IconPicker({ selected, onSelect, className }: IconPickerProps) {
                         "h-9 w-9 rounded-lg flex items-center justify-center",
                         "transition-all duration-150",
                         selected === name
-                            ? "bg-brand text-white shadow-md"
-                            : "bg-surface-tertiary text-text-secondary hover:bg-surface-secondary hover:text-text-primary"
+                            ? "bg-brand text-white shadow-md shadow-brand/20"
+                            : "bg-white/[0.06] text-text-secondary hover:bg-white/[0.08] hover:text-text-primary"
                     )}
                 >
                     <Icon className="h-4 w-4" />

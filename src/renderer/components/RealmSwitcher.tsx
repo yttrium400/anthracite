@@ -129,7 +129,7 @@ export function RealmSwitcher({
             {canScrollLeft && (
                 <button
                     onClick={() => scroll('left')}
-                    className="absolute left-0 z-10 h-8 w-8 flex items-center justify-center bg-gradient-to-r from-white via-white to-transparent"
+                    className="absolute left-0 z-10 h-8 w-8 flex items-center justify-center bg-gradient-to-r from-[#111113] via-[#111113] to-transparent"
                 >
                     <ChevronLeft className="h-4 w-4 text-text-secondary" />
                 </button>
@@ -159,7 +159,7 @@ export function RealmSwitcher({
                                 "transition-all duration-200 ease-out",
                                 isActive
                                     ? cn(bgColor, "text-white shadow-md ring-2", ringColor)
-                                    : "bg-surface-tertiary text-text-secondary hover:bg-surface-secondary hover:text-text-primary hover:scale-105"
+                                    : "bg-white/[0.06] text-text-secondary hover:bg-white/[0.08] hover:text-text-primary hover:scale-105"
                             )}
                         >
                             <Icon className="h-4 w-4" />
@@ -179,7 +179,7 @@ export function RealmSwitcher({
                     className={cn(
                         "flex items-center justify-center shrink-0",
                         "h-9 w-9 rounded-xl",
-                        "border-2 border-dashed border-border/60",
+                        "border-2 border-dashed border-white/[0.08]",
                         "text-text-tertiary",
                         "transition-all duration-200",
                         "hover:border-brand/40 hover:text-brand hover:bg-brand/5"
@@ -193,7 +193,7 @@ export function RealmSwitcher({
             {canScrollRight && (
                 <button
                     onClick={() => scroll('right')}
-                    className="absolute right-0 z-10 h-8 w-8 flex items-center justify-center bg-gradient-to-l from-white via-white to-transparent"
+                    className="absolute right-0 z-10 h-8 w-8 flex items-center justify-center bg-gradient-to-l from-[#111113] via-[#111113] to-transparent"
                 >
                     <ChevronRight className="h-4 w-4 text-text-secondary" />
                 </button>

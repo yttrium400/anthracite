@@ -148,8 +148,8 @@ export const SwipeNavigator = forwardRef<SwipeNavigatorHandle, SwipeNavigatorPro
                     className={cn(
                         "flex items-center justify-center w-11 h-11 rounded-full shadow-lg backdrop-blur-sm border",
                         reachedThreshold
-                            ? "bg-blue-500 border-blue-400 text-white shadow-blue-500/25"
-                            : "bg-white/80 border-gray-200/60 text-gray-400"
+                            ? "bg-brand border-brand-light text-white shadow-brand/25"
+                            : "bg-[#1A1A1D]/90 border-white/[0.1] text-text-tertiary backdrop-blur-sm"
                     )}
                     style={{ transform: `scale(${scale})` }}
                 >

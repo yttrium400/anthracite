@@ -61,25 +61,25 @@ export function InputModal({
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             />
 
             {/* Modal */}
             <div className={cn(
                 "relative w-full max-w-sm mx-4",
-                "bg-white rounded-2xl shadow-2xl",
-                "border border-border/60",
+                "bg-[#1A1A1D] rounded-2xl shadow-2xl",
+                "border border-white/[0.08]",
                 "animate-in fade-in zoom-in-95 duration-200"
             )}>
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
                     <h2 className="text-base font-semibold text-text-primary">
                         {title}
                     </h2>
                     <button
                         onClick={onClose}
-                        className="h-8 w-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-tertiary hover:text-text-primary transition-colors"
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-white/[0.06] hover:text-text-primary transition-colors"
                     >
                         <X className="h-4 w-4" />
                     </button>
@@ -95,9 +95,9 @@ export function InputModal({
                         placeholder={placeholder}
                         className={cn(
                             "w-full px-4 py-3 rounded-xl",
-                            "bg-surface-secondary border border-border/60",
+                            "bg-white/[0.05] border border-white/[0.08]",
                             "text-sm text-text-primary placeholder:text-text-tertiary",
-                            "focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10",
+                            "focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/30",
                             "transition-all duration-200"
                         )}
                     />
@@ -109,7 +109,7 @@ export function InputModal({
                             className={cn(
                                 "flex-1 px-4 py-2.5 rounded-xl",
                                 "text-sm font-medium text-text-secondary",
-                                "bg-surface-tertiary hover:bg-surface-secondary",
+                                "bg-white/[0.06] hover:bg-white/[0.08]",
                                 "transition-colors duration-200"
                             )}
                         >

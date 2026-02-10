@@ -52,8 +52,8 @@ function Toggle({
             onClick={() => !disabled && onChange(!enabled)}
             className={cn(
                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent",
-                "transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2",
-                enabled ? "bg-brand" : "bg-gray-200",
+                "transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-[#1A1A1D]",
+                enabled ? "bg-brand" : "bg-white/[0.12]",
                 disabled && "opacity-50 cursor-not-allowed"
             )}
         >
@@ -79,7 +79,7 @@ function SettingRow({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex items-center justify-between py-4 border-b border-border/40 last:border-0">
+        <div className="flex items-center justify-between py-4 border-b border-white/[0.06] last:border-0">
             <div className="flex-1 pr-4">
                 <h4 className="text-sm font-medium text-text-primary">{label}</h4>
                 {description && (
@@ -106,8 +106,8 @@ function Select<T extends string>({
             value={value}
             onChange={(e) => onChange(e.target.value as T)}
             className={cn(
-                "px-3 py-1.5 rounded-lg border border-border bg-white text-sm",
-                "focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand",
+                "px-3 py-1.5 rounded-lg border border-white/[0.08] bg-white/[0.05] text-sm text-text-primary",
+                "focus:outline-none focus:ring-1 focus:ring-brand/30 focus:border-brand/40",
                 "cursor-pointer"
             )}
         >
@@ -212,7 +212,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
 
     if (!settings) {
         return (
-            <div className="flex items-center justify-center h-full w-full bg-surface">
+            <div className="flex items-center justify-center h-full w-full bg-[#0A0A0B]">
                 <div className="loading-spinner w-8 h-8" />
             </div>
         );
@@ -228,11 +228,11 @@ export function SettingsPage({ className }: SettingsPageProps) {
 
     return (
         <div className={cn(
-            "flex h-full w-full bg-surface",
+            "flex h-full w-full bg-[#0A0A0B]",
             className
         )}>
             {/* Sidebar Navigation */}
-            <nav className="w-56 border-r border-border/40 bg-surface-secondary/30 p-4 flex flex-col">
+            <nav className="w-56 border-r border-white/[0.06] bg-[#111113]/50 p-4 flex flex-col">
                 <button
                     onClick={handleBack}
                     className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary mb-6 transition-colors"
@@ -251,8 +251,8 @@ export function SettingsPage({ className }: SettingsPageProps) {
                                 className={cn(
                                     "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                                     activeSection === section.id
-                                        ? "bg-brand-muted text-brand-dark"
-                                        : "text-text-secondary hover:bg-surface-tertiary hover:text-text-primary"
+                                        ? "bg-brand/10 text-brand-light"
+                                        : "text-text-secondary hover:bg-white/[0.06] hover:text-text-primary"
                                 )}
                             >
                                 <section.icon className="h-4 w-4" />
@@ -282,7 +282,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
                                 title="Browser"
                                 description="Core browser settings and defaults"
                             />
-                            <div className="bg-white rounded-xl border border-border/60 p-4">
+                            <div className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-4">
                                 <SettingRow
                                     label="Default Search Engine"
                                     description="Used when searching from the address bar"
@@ -330,7 +330,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
                                 title="Appearance"
                                 description="Customize how Poseidon looks"
                             />
-                            <div className="bg-white rounded-xl border border-border/60 p-4">
+                            <div className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-4">
                                 <SettingRow
                                     label="Theme"
                                     description="Choose your preferred color scheme"
@@ -381,7 +381,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
                                 title="Privacy & Security"
                                 description="Control your privacy and data"
                             />
-                            <div className="bg-white rounded-xl border border-border/60 p-4">
+                            <div className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-4">
                                 <SettingRow
                                     label="Save Browsing History"
                                     description="Remember sites you visit for autocomplete and suggestions"
@@ -439,7 +439,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
                                     />
                                 </SettingRow>
 
-                                <div className="pt-4 border-t border-border/40 mt-4">
+                                <div className="pt-4 border-t border-white/[0.06] mt-4">
                                     <button
                                         onClick={() => {
                                             if (window.confirm('Are you sure you want to clear all browsing history?')) {
@@ -463,7 +463,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
                                 title="Tabs & Navigation"
                                 description="Configure tab behavior and navigation"
                             />
-                            <div className="bg-white rounded-xl border border-border/60 p-4">
+                            <div className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-4">
                                 <SettingRow
                                     label="Open Links in New Tab"
                                     description="Open external links in a new tab instead of the current one"
@@ -505,7 +505,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
                                 title="Developer"
                                 description="Advanced settings for developers"
                             />
-                            <div className="bg-white rounded-xl border border-border/60 p-4">
+                            <div className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-4">
                                 <SettingRow
                                     label="Enable DevTools"
                                     description="Allow opening Chrome DevTools for web pages (F12 or Cmd+Option+I)"
@@ -517,7 +517,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
                                 </SettingRow>
                             </div>
 
-                            <div className="mt-6 p-4 bg-surface-tertiary/50 rounded-xl">
+                            <div className="mt-6 p-4 bg-white/[0.03] rounded-xl border border-white/[0.06]">
                                 <h4 className="text-sm font-medium text-text-primary mb-2">About Poseidon</h4>
                                 <div className="space-y-1 text-xs text-text-tertiary">
                                     <p>Version: 0.1.0 (Beta)</p>

@@ -87,8 +87,8 @@ export function ContextMenu({ items, position, onSelect, onClose }: ContextMenuP
             ref={menuRef}
             className={cn(
                 "fixed z-[300] min-w-[180px]",
-                "bg-white/95 backdrop-blur-xl",
-                "rounded-xl border border-border/60",
+                "bg-[#1A1A1D]/95 backdrop-blur-xl",
+                "rounded-xl border border-white/[0.1]",
                 "shadow-2xl",
                 "py-1.5",
                 "animate-in fade-in zoom-in-95 duration-100"
@@ -103,7 +103,7 @@ export function ContextMenu({ items, position, onSelect, onClose }: ContextMenuP
                     return (
                         <div
                             key={`divider-${index}`}
-                            className="my-1.5 mx-2 border-t border-border/40"
+                            className="my-1.5 mx-2 border-t border-white/[0.06]"
                         />
                     );
                 }
@@ -126,8 +126,8 @@ export function ContextMenu({ items, position, onSelect, onClose }: ContextMenuP
                                 item.disabled
                                     ? "text-text-tertiary cursor-not-allowed"
                                     : item.danger
-                                        ? "text-red-600 hover:bg-red-50"
-                                        : "text-text-primary hover:bg-surface-secondary"
+                                        ? "text-red-400 hover:bg-red-500/10"
+                                        : "text-text-primary hover:bg-white/[0.06]"
                             )}
                         >
                             {item.icon && (
@@ -151,8 +151,8 @@ export function ContextMenu({ items, position, onSelect, onClose }: ContextMenuP
                             <div
                                 className={cn(
                                     "absolute left-full top-0 ml-1 min-w-[160px]",
-                                    "bg-white/95 backdrop-blur-xl",
-                                    "rounded-xl border border-border/60",
+                                    "bg-[#1A1A1D]/95 backdrop-blur-xl",
+                                    "rounded-xl border border-white/[0.1]",
                                     "shadow-2xl",
                                     "py-1.5"
                                 )}
@@ -172,7 +172,7 @@ export function ContextMenu({ items, position, onSelect, onClose }: ContextMenuP
                                             "text-sm transition-colors duration-100",
                                             subItem.disabled
                                                 ? "text-text-tertiary cursor-not-allowed"
-                                                : "text-text-primary hover:bg-surface-secondary"
+                                                : "text-text-primary hover:bg-white/[0.06]"
                                         )}
                                     >
                                         {subItem.icon && (

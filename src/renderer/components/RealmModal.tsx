@@ -109,7 +109,7 @@ export function RealmModal({
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             />
 
@@ -117,18 +117,18 @@ export function RealmModal({
             <div className={cn(
                 "relative w-full mx-4",
                 step === 'template' ? "max-w-4xl" : "max-w-md",
-                "bg-white rounded-2xl shadow-2xl",
-                "border border-border/60",
+                "bg-[#1A1A1D] rounded-2xl shadow-2xl",
+                "border border-white/[0.08]",
                 "animate-in fade-in zoom-in-95 duration-200",
                 "flex flex-col max-h-[90vh]"
             )}>
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border/40 shrink-0">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06] shrink-0">
                     <div className="flex items-center gap-3">
                         {step === 'details' && mode === 'create' && (
                             <button
                                 onClick={() => setStep('template')}
-                                className="p-1 -ml-2 rounded-lg text-text-tertiary hover:bg-surface-tertiary hover:text-text-primary transition-colors"
+                                className="p-1 -ml-2 rounded-lg text-text-tertiary hover:bg-white/[0.06] hover:text-text-primary transition-colors"
                             >
                                 <ArrowLeft className="h-5 w-5" />
                             </button>
@@ -141,7 +141,7 @@ export function RealmModal({
                     </div>
                     <button
                         onClick={onClose}
-                        className="h-8 w-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-tertiary hover:text-text-primary transition-colors"
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-white/[0.06] hover:text-text-primary transition-colors"
                     >
                         <X className="h-5 w-5" />
                     </button>
@@ -157,10 +157,10 @@ export function RealmModal({
                                     onClick={() => handleTemplateSelect(null)}
                                     className={cn(
                                         "flex flex-col items-start text-left p-5 rounded-xl border-2 transition-all duration-200",
-                                        "border-dashed border-border hover:border-brand hover:bg-surface-secondary/50 group"
+                                        "border-dashed border-white/[0.08] hover:border-brand hover:bg-white/[0.04] group"
                                     )}
                                 >
-                                    <div className="h-12 w-12 rounded-xl bg-surface-tertiary flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                                    <div className="h-12 w-12 rounded-xl bg-white/[0.06] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                                         <LayoutGrid className="h-6 w-6 text-text-secondary" />
                                     </div>
                                     <h3 className="font-semibold text-text-primary mb-1">Start from Blank</h3>
@@ -175,8 +175,8 @@ export function RealmModal({
                                             key={template.id}
                                             onClick={() => handleTemplateSelect(template)}
                                             className={cn(
-                                                "flex flex-col items-start text-left p-5 rounded-xl border border-border transition-all duration-200",
-                                                "hover:border-brand/50 hover:shadow-md hover:bg-surface-secondary/30 group"
+                                                "flex flex-col items-start text-left p-5 rounded-xl border border-white/[0.06] transition-all duration-200",
+                                                "hover:border-brand/50 hover:shadow-md hover:bg-white/[0.04] group"
                                             )}
                                         >
                                             <div
@@ -193,7 +193,7 @@ export function RealmModal({
                                                 {template.docks.slice(0, 3).map((dock, i) => {
                                                     const DockIcon = getIconComponent(dock.icon);
                                                     return (
-                                                        <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-surface-tertiary/50 text-xs text-text-secondary border border-border/50">
+                                                        <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.04] text-xs text-text-secondary border border-white/[0.06]">
                                                             <DockIcon className="h-3 w-3" />
                                                             <span>{dock.name}</span>
                                                         </div>
@@ -218,7 +218,7 @@ export function RealmModal({
                                     className={cn(
                                         "h-24 w-24 rounded-3xl flex items-center justify-center mb-6",
                                         "transition-all duration-200",
-                                        "shadow-xl ring-4 ring-white",
+                                        "shadow-xl ring-4 ring-white/10",
                                         `bg-${color}-500 text-white`,
                                         "hover:scale-105 active:scale-95"
                                     )}
@@ -251,9 +251,9 @@ export function RealmModal({
                                     placeholder="e.g. Work, Personal, Gaming..."
                                     className={cn(
                                         "w-full px-4 py-3 rounded-xl",
-                                        "bg-surface-secondary border border-border/60",
+                                        "bg-white/[0.05] border border-white/[0.08]",
                                         "text-base text-text-primary placeholder:text-text-tertiary",
-                                        "focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10",
+                                        "focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/30",
                                         "transition-all duration-200"
                                     )}
                                 />
@@ -264,7 +264,7 @@ export function RealmModal({
                                 <button
                                     type="button"
                                     onClick={() => setShowIconPicker(!showIconPicker)}
-                                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-surface-secondary/50 border border-border/40 text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
+                                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.06] text-text-secondary hover:text-text-primary hover:bg-white/[0.06] transition-colors"
                                 >
                                     <span className="text-sm font-medium">Choose Icon</span>
                                     <span className="text-xs text-text-tertiary">
@@ -272,7 +272,7 @@ export function RealmModal({
                                     </span>
                                 </button>
                                 {showIconPicker && (
-                                    <div className="p-4 bg-surface-secondary rounded-xl border border-border/40 animate-in slide-in-from-top-2 duration-200">
+                                    <div className="p-4 bg-white/[0.04] rounded-xl border border-white/[0.06] animate-in slide-in-from-top-2 duration-200">
                                         <IconPicker
                                             selected={icon}
                                             onSelect={(newIcon) => {
@@ -292,7 +292,7 @@ export function RealmModal({
                                     className={cn(
                                         "flex-1 px-4 py-3 rounded-xl",
                                         "text-sm font-medium text-text-secondary",
-                                        "bg-surface-tertiary hover:bg-surface-secondary",
+                                        "bg-white/[0.06] hover:bg-white/[0.08]",
                                         "transition-colors duration-200"
                                     )}
                                 >
@@ -304,7 +304,7 @@ export function RealmModal({
                                     className={cn(
                                         "flex-1 px-4 py-3 rounded-xl flex items-center justify-center gap-2",
                                         "text-sm font-medium text-white",
-                                        "bg-brand hover:bg-brand-dark shadow-lg shadow-brand/20",
+                                        "bg-brand hover:bg-brand-dark shadow-lg shadow-brand/25",
                                         "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none",
                                         "transition-all duration-200 hover:translate-y-[-1px]"
                                     )}

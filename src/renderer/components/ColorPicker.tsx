@@ -35,7 +35,7 @@ export function ColorPicker({ selected, onSelect, className }: ColorPickerProps)
                         "h-8 w-8 rounded-full flex items-center justify-center",
                         "transition-all duration-150",
                         bg,
-                        selected === name && "ring-2 ring-offset-2",
+                        selected === name && "ring-2 ring-offset-2 ring-offset-[#1A1A1D]",
                         selected === name && ring
                     )}
                 >

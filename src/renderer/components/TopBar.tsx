@@ -54,31 +54,31 @@ interface ActiveTab {
     canGoForward: boolean;
 }
 
-// Color mappings for realm indicator
+// Color mappings for realm indicator (dark theme)
 const COLOR_BG_MAP: Record<ThemeColor, string> = {
-    blue: 'bg-blue-500/10',
-    purple: 'bg-purple-500/10',
-    pink: 'bg-pink-500/10',
-    red: 'bg-red-500/10',
-    orange: 'bg-orange-500/10',
-    yellow: 'bg-yellow-500/10',
-    green: 'bg-green-500/10',
-    teal: 'bg-teal-500/10',
-    cyan: 'bg-cyan-500/10',
-    gray: 'bg-gray-500/10',
+    blue: 'bg-blue-500/15',
+    purple: 'bg-purple-500/15',
+    pink: 'bg-pink-500/15',
+    red: 'bg-red-500/15',
+    orange: 'bg-orange-500/15',
+    yellow: 'bg-yellow-500/15',
+    green: 'bg-green-500/15',
+    teal: 'bg-teal-500/15',
+    cyan: 'bg-cyan-500/15',
+    gray: 'bg-gray-500/15',
 };
 
 const COLOR_TEXT_MAP: Record<ThemeColor, string> = {
-    blue: 'text-blue-600',
-    purple: 'text-purple-600',
-    pink: 'text-pink-600',
-    red: 'text-red-600',
-    orange: 'text-orange-600',
-    yellow: 'text-yellow-600',
-    green: 'text-green-600',
-    teal: 'text-teal-600',
-    cyan: 'text-cyan-600',
-    gray: 'text-gray-600',
+    blue: 'text-blue-400',
+    purple: 'text-purple-400',
+    pink: 'text-pink-400',
+    red: 'text-red-400',
+    orange: 'text-orange-400',
+    yellow: 'text-yellow-400',
+    green: 'text-green-400',
+    teal: 'text-teal-400',
+    cyan: 'text-cyan-400',
+    gray: 'text-gray-400',
 };
 
 const COLOR_BORDER_MAP: Record<ThemeColor, string> = {
@@ -538,7 +538,7 @@ export function TopBar({
     return (
         <header
             className={cn(
-                "h-[52px] bg-surface border-b border-border/60 flex items-center gap-2 px-3",
+                "h-[52px] bg-[#0A0A0B]/90 backdrop-blur-xl border-b border-white/[0.06] flex items-center gap-2 px-3",
                 "select-none",
                 className
             )}
@@ -588,8 +588,8 @@ export function TopBar({
                     {showRealmDropdown && (
                         <div className={cn(
                             "absolute top-full left-0 mt-1 min-w-[160px] z-[100]",
-                            "bg-white/95 backdrop-blur-xl rounded-xl",
-                            "border border-border/60 shadow-lg",
+                            "bg-[#1A1A1D]/95 backdrop-blur-xl rounded-xl",
+                            "border border-white/[0.08] shadow-lg",
                             "py-1.5 animate-in fade-in zoom-in-95 duration-100"
                         )}>
                             {realms.map((realm) => {
@@ -604,7 +604,7 @@ export function TopBar({
                                             "text-sm transition-colors duration-100",
                                             isActive
                                                 ? cn(COLOR_BG_MAP[realm.color], COLOR_TEXT_MAP[realm.color])
-                                                : "text-text-primary hover:bg-surface-secondary"
+                                                : "text-text-primary hover:bg-white/[0.06]"
                                         )}
                                     >
                                         <RealmIcon className={cn("h-4 w-4", COLOR_TEXT_MAP[realm.color])} />
@@ -629,11 +629,11 @@ export function TopBar({
                 <div
                     className={cn(
                         "relative flex items-center h-9 rounded-xl",
-                        "bg-surface-secondary border",
+                        "bg-white/[0.05] border",
                         "transition-all duration-200",
                         isFocused
-                            ? "border-brand ring-2 ring-brand/10 bg-white"
-                            : "border-border/60 hover:border-border-strong",
+                            ? "border-brand/40 ring-1 ring-brand/30 bg-white/[0.08]"
+                            : "border-white/[0.08] hover:border-white/[0.12]",
                         showSuggestions && "rounded-b-none"
                     )}
                 >
@@ -697,7 +697,7 @@ export function TopBar({
                     </div>
                     {/* AI Indicator + Controls */}
                     <div className="flex items-center gap-1 pr-3">
-                        <div className="h-5 w-px bg-border mr-1" />
+                        <div className="h-5 w-px bg-white/[0.08] mr-1" />
                         <button
                             type="button"
                             onClick={handleRunAgent}
@@ -705,8 +705,8 @@ export function TopBar({
                             className={cn(
                                 "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors",
                                 isAIProcessing
-                                    ? "bg-brand/10 text-brand cursor-wait"
-                                    : "text-text-secondary hover:bg-surface-tertiary hover:text-text-primary"
+                                    ? "bg-brand/15 text-brand cursor-wait animate-glow-pulse"
+                                    : "text-text-secondary hover:bg-white/[0.06] hover:text-text-primary"
                             )}
                             title="Run AI Agent"
                         >
@@ -749,24 +749,24 @@ export function TopBar({
                 {showSuggestions && suggestions.length > 0 && (
                     <div
                         ref={suggestionsRef}
-                        className="absolute z-[9999] w-full bg-white border border-t-0 border-border/60 rounded-b-xl shadow-lg overflow-hidden"
+                        className="absolute z-[9999] w-full bg-[#1A1A1D]/95 backdrop-blur-xl border border-t-0 border-white/[0.08] rounded-b-xl shadow-lg overflow-hidden"
                     >
                         {suggestions.map((suggestion, index) => (
                             <button
                                 key={`${suggestion.type}-${suggestion.url || suggestion.title}-${index}`}
                                 type="button"
                                 onMouseDown={(e) => {
-                                    e.preventDefault(); // Prevent blur
+                                    e.preventDefault();
                                     handleSelectSuggestion(suggestion);
                                 }}
                                 className={cn(
                                     "flex items-center gap-3 w-full px-3 py-2.5 text-left transition-colors",
-                                    "hover:bg-surface-secondary",
-                                    index === selectedIndex && "bg-surface-secondary"
+                                    "hover:bg-white/[0.06]",
+                                    index === selectedIndex && "bg-white/[0.06]"
                                 )}
                             >
                                 {/* Icon */}
-                                <div className="flex items-center justify-center h-7 w-7 rounded-md bg-surface-tertiary shrink-0">
+                                <div className="flex items-center justify-center h-7 w-7 rounded-md bg-white/[0.06] shrink-0">
                                     {suggestion.type === 'history' && suggestion.favicon ? (
                                         <img
                                             src={suggestion.favicon}
@@ -797,7 +797,7 @@ export function TopBar({
 
                                 {/* Type Badge */}
                                 {suggestion.type === 'search' && (
-                                    <span className="text-[10px] text-brand bg-brand/10 px-1.5 py-0.5 rounded shrink-0">
+                                    <span className="text-[10px] text-brand bg-brand/15 px-1.5 py-0.5 rounded shrink-0">
                                         Search
                                     </span>
                                 )}

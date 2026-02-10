@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     DndContext,
     DragOverlay,
@@ -969,39 +970,46 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
                 />
 
                 {/* Backdrop */}
-                <div
-                    className={cn(
-                        "fixed inset-0 bg-black/5 backdrop-blur-[1px] z-40 transition-opacity duration-300",
-                        isVisible && !isPinned ? "opacity-100" : "opacity-0 pointer-events-none"
+                <AnimatePresence>
+                    {isVisible && !isPinned && (
+                        <motion.div
+                            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => !isPinned && setIsVisible(false)}
+                        />
                     )}
-                    onClick={() => !isPinned && setIsVisible(false)}
-                />
+                </AnimatePresence>
 
                 {/* Floating Sidebar */}
-                <aside
+                <motion.aside
                     ref={sidebarRef}
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                     style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                     className={cn(
                         "fixed left-3 top-3 bottom-3 w-[280px] z-50",
-                        "bg-white/95 backdrop-blur-2xl",
-                        "rounded-2xl border border-border/60",
+                        "bg-[#111113]/90 backdrop-blur-2xl",
+                        "rounded-2xl border border-white/[0.06]",
                         "shadow-large",
                         "flex flex-col",
-                        "transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-                        isPinned || isVisible
-                            ? "translate-x-0 opacity-100"
-                            : "-translate-x-[calc(100%+20px)] opacity-0",
                         className
                     )}
+                    initial={false}
+                    animate={{
+                        x: isPinned || isVisible ? 0 : -(280 + 20),
+                        opacity: isPinned || isVisible ? 1 : 0,
+                    }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 >
                     {/* Header */}
-                    <header className="flex items-center justify-between h-14 px-4 border-b border-border/40">
+                    <header className="flex items-center justify-between h-14 px-4 border-b border-white/[0.06]">
                         <div className="flex items-center gap-2.5">
                             <div className="relative group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-brand to-accent-violet rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity pointer-events-none" />
-                                <div className="relative flex items-center justify-center h-8 w-8 rounded-xl bg-gradient-to-br from-brand to-accent-violet shadow-lg">
+                                <div className="absolute inset-0 bg-gradient-to-br from-brand to-accent-violet rounded-xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity pointer-events-none" />
+                                <div className="relative flex items-center justify-center h-8 w-8 rounded-xl bg-gradient-to-br from-brand to-accent-violet shadow-glow">
                                     <Layers className="h-4 w-4 text-white" />
                                 </div>
                             </div>
@@ -1032,20 +1040,20 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
                         <button
                             onClick={() => handleCreateTab()}
                             className={cn(
-                                "group flex items-center w-full gap-3 rounded-xl bg-surface-tertiary border border-transparent px-3 py-2.5",
+                                "group flex items-center w-full gap-3 rounded-xl bg-white/[0.04] border border-white/[0.06] px-3 py-2.5",
                                 "transition-all duration-200 ease-smooth",
-                                "hover:bg-brand-muted hover:border-brand/20 hover:shadow-soft",
+                                "hover:bg-white/[0.08] hover:border-brand/30",
                                 "active:scale-[0.98]"
                             )}
                         >
                             <div className={cn(
-                                "flex items-center justify-center h-7 w-7 rounded-lg bg-white shadow-soft border border-border/50",
-                                "group-hover:bg-brand group-hover:border-brand group-hover:shadow-brand",
+                                "flex items-center justify-center h-7 w-7 rounded-lg bg-white/[0.08] border border-white/[0.08]",
+                                "group-hover:bg-brand group-hover:border-brand group-hover:shadow-glow",
                                 "transition-all duration-200"
                             )}>
                                 <Plus className="h-3.5 w-3.5 text-text-secondary group-hover:text-white transition-colors" />
                             </div>
-                            <span className="text-sm font-medium text-text-secondary group-hover:text-brand-dark">
+                            <span className="text-sm font-medium text-text-secondary group-hover:text-text-primary">
                                 New Tab
                             </span>
                             <span className="ml-auto kbd">
@@ -1059,7 +1067,7 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
                         {/* Pinned Tabs Section */}
                         {pinnedTabs.length > 0 && (
                             <section>
-                                <h2 className="px-3 mb-2 text-[11px] font-semibold text-text-tertiary uppercase tracking-wider flex items-center gap-1.5">
+                                <h2 className="px-3 mb-2 text-[11px] font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">
                                     <Pin className="h-3 w-3" />
                                     Pinned
                                 </h2>
@@ -1073,11 +1081,11 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
                                                     "flex items-center w-full gap-3 px-3 py-2 rounded-xl text-sm font-medium cursor-pointer",
                                                     "transition-all duration-200 ease-smooth group",
                                                     activeTabId === tab.id
-                                                        ? "bg-brand-muted text-brand-dark"
-                                                        : "text-text-secondary hover:bg-surface-tertiary hover:text-text-primary"
+                                                        ? "bg-white/[0.08] text-text-primary border-l-2 border-brand"
+                                                        : "text-text-secondary hover:bg-white/[0.06] hover:text-text-primary"
                                                 )}
                                             >
-                                                <div className="h-5 w-5 rounded shrink-0 flex items-center justify-center bg-surface-tertiary overflow-hidden">
+                                                <div className="h-5 w-5 rounded shrink-0 flex items-center justify-center bg-white/[0.06] overflow-hidden">
                                                     {tab.isLoading ? (
                                                         <Loader2 className="h-3 w-3 text-brand animate-spin" />
                                                     ) : getFaviconUrl(tab) ? (
@@ -1105,7 +1113,7 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
                         {activeRealmDocks.length > 0 && (
                             <section className="space-y-2">
                                 <div className="flex items-center justify-between px-3">
-                                    <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">
+                                    <h2 className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
                                         Docks
                                     </h2>
                                     <button
@@ -1143,7 +1151,7 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
                         {/* Loose Tabs Section */}
                         <LooseTabsDropZone looseTabs={looseTabs} activeRealmDocks={activeRealmDocks}>
                             <div className="flex items-center justify-between px-3 mb-2">
-                                <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">
+                                <h2 className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">
                                     Tabs ({looseTabs.length})
                                 </h2>
                                 {activeRealmDocks.length === 0 && (
@@ -1206,7 +1214,7 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
                     </nav>
 
                     {/* Realm Switcher */}
-                    <div className="border-t border-border/40 py-2">
+                    <div className="border-t border-white/[0.06] py-2">
                         <RealmSwitcher
                             realms={realms}
                             activeRealmId={activeRealmId}
@@ -1217,14 +1225,14 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
                     </div>
 
                     {/* Footer - Shields */}
-                    <footer className="p-3 border-t border-border/40 space-y-2">
+                    <footer className="p-3 border-t border-white/[0.06] space-y-2">
                         <button
                             onClick={handleToggleAdBlock}
                             className={cn(
                                 "flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
                                 adBlockEnabled
-                                    ? "text-success hover:bg-success/5"
-                                    : "text-text-secondary hover:bg-surface-tertiary"
+                                    ? "text-success hover:bg-success/10"
+                                    : "text-text-secondary hover:bg-white/[0.06]"
                             )}
                         >
                             {adBlockEnabled ? (
@@ -1235,14 +1243,14 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
                             <span className="font-semibold">{adBlockEnabled ? "Shields UP" : "Shields DOWN"}</span>
                             <span className={cn(
                                 "ml-auto text-[10px] px-1.5 py-0.5 rounded-md font-medium",
-                                adBlockEnabled ? "bg-success/10 text-success" : "bg-surface-tertiary text-text-tertiary"
+                                adBlockEnabled ? "bg-success/10 text-success" : "bg-white/[0.06] text-text-tertiary"
                             )}>
                                 {adBlockEnabled ? "ON" : "OFF"}
                             </span>
                         </button>
 
                         {adBlockEnabled && (blockedCount > 0 || httpsUpgradeCount > 0) && (
-                            <div className="px-3 py-2 rounded-lg bg-surface-tertiary/50 space-y-1.5">
+                            <div className="px-3 py-2 rounded-lg bg-white/[0.03] space-y-1.5">
                                 {blockedCount > 0 && (
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="text-text-secondary">Ads & Trackers blocked</span>
@@ -1254,13 +1262,13 @@ export function Sidebar({ className, isPinned, onPinnedChange, tabs, activeTabId
 
                         <button
                             onClick={() => window.electron?.navigation.navigate('poseidon://settings')}
-                            className="flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:bg-surface-tertiary hover:text-text-primary transition-all duration-200"
+                            className="flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:bg-white/[0.06] hover:text-text-primary transition-all duration-200"
                         >
                             <Settings className="h-[18px] w-[18px] shrink-0" />
                             <span>Settings</span>
                         </button>
                     </footer>
-                </aside>
+                </motion.aside>
 
                 {/* Realm Modal (Create/Edit) */}
                 <RealmModal

@@ -83,8 +83,8 @@ export function SortableTab({
                     "transition-all duration-150 ease-out group/tab",
                     isDragging && "z-50 shadow-lg opacity-50",
                     isActive
-                        ? cn("bg-white shadow-sm border", borderColor, textColor)
-                        : "text-text-secondary hover:bg-white/50 hover:text-text-primary"
+                        ? cn("bg-white/[0.08] border", borderColor, textColor)
+                        : "text-text-secondary hover:bg-white/[0.06] hover:text-text-primary"
                 )}
             >
             {/* Drag Handle */}
@@ -133,7 +133,7 @@ export function SortableTab({
                 className={cn(
                     "h-5 w-5 rounded flex items-center justify-center shrink-0",
                     "opacity-0 group-hover/tab:opacity-100",
-                    "hover:bg-black/10 transition-all"
+                    "hover:bg-white/[0.1] transition-all"
                 )}
             >
                 <X className="h-3 w-3" />
@@ -158,7 +158,7 @@ export function TabDragOverlay({ tab }: { tab: Tab }) {
     return (
         <div className={cn(
             "flex items-center gap-2 px-3 py-2 rounded-lg text-sm",
-            "bg-white shadow-xl border border-brand/30",
+            "bg-[#1A1A1D] shadow-xl border border-brand/30",
             "pointer-events-none w-[240px]"
         )}>
             {/* Favicon */}

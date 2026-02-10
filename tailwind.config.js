@@ -22,52 +22,54 @@ module.exports = {
                 mono: ['JetBrains Mono', 'SF Mono', 'Menlo', 'Monaco', 'monospace'],
             },
             colors: {
-                // Premium neutral palette
+                // Dark-first surface layers
                 surface: {
-                    DEFAULT: 'hsl(var(--background))',
-                    secondary: 'hsl(var(--secondary))',
-                    tertiary: 'hsl(var(--muted))',
-                    elevated: 'hsl(var(--card))',
+                    DEFAULT: '#0A0A0B',
+                    secondary: '#111113',
+                    tertiary: '#1A1A1D',
+                    elevated: '#222225',
                 },
                 border: {
-                    DEFAULT: 'hsl(var(--border))',
-                    subtle: 'hsl(var(--border) / 0.5)',
-                    strong: 'hsl(var(--input))',
+                    DEFAULT: 'rgba(255,255,255,0.08)',
+                    subtle: 'rgba(255,255,255,0.04)',
+                    strong: 'rgba(255,255,255,0.12)',
                 },
                 text: {
-                    primary: 'hsl(var(--foreground))',
-                    secondary: 'hsl(var(--muted-foreground))',
-                    tertiary: 'hsl(var(--muted-foreground) / 0.7)',
-                    inverted: 'hsl(var(--background))',
+                    primary: '#FAFAFA',
+                    secondary: '#A1A1AA',
+                    tertiary: '#71717A',
+                    inverted: '#0A0A0B',
                 },
-                // Brand colors - sophisticated blue-violet
+                // Brand — electric indigo with glow
                 brand: {
-                    DEFAULT: 'hsl(var(--primary))',
-                    light: 'color-mix(in srgb, hsl(var(--primary)), white 20%)',
-                    dark: 'color-mix(in srgb, hsl(var(--primary)), black 20%)',
-                    muted: 'hsl(var(--primary) / 0.1)',
+                    DEFAULT: '#6366F1',
+                    light: '#818CF8',
+                    dark: '#4F46E5',
+                    muted: 'rgba(99,102,241,0.12)',
                 },
                 // Accent colors
                 accent: {
                     blue: '#3B82F6',
                     violet: '#8B5CF6',
                     emerald: '#10B981',
-                    amber: 'hsl(var(--accent))',
-                    rose: 'hsl(var(--destructive))',
+                    amber: '#F59E0B',
+                    rose: '#EF4444',
                 },
-                // Semantic colors
+                // Semantic
                 success: '#22C55E',
-                warning: '#EAB308',
-                error: 'hsl(var(--destructive))',
+                warning: '#F59E0B',
+                error: '#EF4444',
                 info: '#3B82F6',
             },
             boxShadow: {
-                'soft': '0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 4px 16px -4px rgba(0, 0, 0, 0.05)',
-                'medium': '0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 8px 24px -4px rgba(0, 0, 0, 0.06)',
-                'large': '0 8px 24px -4px rgba(0, 0, 0, 0.1), 0 16px 48px -8px rgba(0, 0, 0, 0.08)',
-                'glow': '0 0 24px -4px rgba(99, 102, 241, 0.25)',
-                'glow-lg': '0 0 48px -8px rgba(99, 102, 241, 0.3)',
-                'inner-soft': 'inset 0 1px 2px rgba(0, 0, 0, 0.04)',
+                'soft': '0 2px 8px -2px rgba(0,0,0,0.3), 0 4px 16px -4px rgba(0,0,0,0.2)',
+                'medium': '0 4px 12px -2px rgba(0,0,0,0.4), 0 8px 24px -4px rgba(0,0,0,0.3)',
+                'large': '0 8px 24px -4px rgba(0,0,0,0.5), 0 16px 48px -8px rgba(0,0,0,0.4)',
+                'glow': '0 0 20px -4px rgba(99,102,241,0.4)',
+                'glow-lg': '0 0 40px -8px rgba(99,102,241,0.5)',
+                'glow-brand': '0 0 20px rgba(99,102,241,0.4)',
+                'inner-soft': 'inset 0 1px 2px rgba(0,0,0,0.2)',
+                'inner-glow': 'inset 0 1px 0 rgba(255,255,255,0.05)',
             },
             borderRadius: {
                 '4xl': '2rem',
@@ -88,6 +90,7 @@ module.exports = {
                 'spin-slow': 'spin 3s linear infinite',
                 'bounce-soft': 'bounceSoft 1s ease-in-out infinite',
                 'gradient': 'gradient 8s ease infinite',
+                'glow-pulse': 'glowPulse 2s ease-in-out infinite',
             },
             keyframes: {
                 fadeIn: {
@@ -129,6 +132,10 @@ module.exports = {
                 gradient: {
                     '0%, 100%': { backgroundPosition: '0% 50%' },
                     '50%': { backgroundPosition: '100% 50%' },
+                },
+                glowPulse: {
+                    '0%, 100%': { boxShadow: '0 0 20px rgba(99,102,241,0.3)' },
+                    '50%': { boxShadow: '0 0 30px rgba(99,102,241,0.6)' },
                 },
                 float: {
                     '0%, 100%': { transform: 'translateY(0px)' },
