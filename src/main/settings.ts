@@ -35,6 +35,9 @@ export interface AppSettings {
 
     // Developer
     enableDevTools: boolean;
+
+    // API Configuration
+    openaiApiKey?: string; // User's OpenAI API key for agent features
 }
 
 // Default settings

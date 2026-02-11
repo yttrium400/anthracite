@@ -285,6 +285,7 @@ interface AppSettings {
     confirmBeforeClosingMultipleTabs: boolean
     restoreTabsOnStartup: boolean
     enableDevTools: boolean
+    openaiApiKey?: string
 }
 
 declare global {

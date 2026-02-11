@@ -82,6 +82,9 @@ class TaskRequest(BaseModel):
     cdp_url: str = "http://127.0.0.1:9222"
     target_id: str | None = None
 
+class TestApiKeyRequest(BaseModel):
+    api_key: str
+
 @app.get("/")
 def read_root():
     return {"status": "Anthracite Backend Running"}
@@ -122,6 +125,28 @@ async def agent_status():
         "running": agent_control.is_running,
         "paused": agent_control.is_paused,
     }
+
+
+@app.post("/test-api-key")
+async def test_api_key(request: TestApiKeyRequest):
+    """Test if an OpenAI API key is valid by making a minimal API call."""
+    try:
+        from langchain_openai import ChatOpenAI
+        
+        # Create a temporary LLM instance with the provided key
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            api_key=request.api_key,
+            timeout=10,
+        )
+        
+        # Make a minimal test call
+        result = await llm.ainvoke("test")
+        
+        return {"status": "success", "valid": True}
+    except Exception as e:
+        logger.error(f"API key test failed: {e}")
+        return {"status": "error", "valid": False, "message": str(e)}
 
 
 def _sse_event(data: dict) -> str:

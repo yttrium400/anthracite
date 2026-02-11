@@ -1407,6 +1407,15 @@ function startPythonBackend(): void {
     const isDev = !app.isPackaged
     // console.log('Starting Python Backend...', isDev ? '(Dev)' : '(Prod)')
 
+    // Get API key from settings
+    const apiKey = settingsStore.get('openaiApiKey') || process.env.OPENAI_API_KEY || ''
+
+    // Prepare environment variables
+    const env = {
+        ...process.env,
+        OPENAI_API_KEY: apiKey
+    }
+
     if (isDev) {
         // Development: Run from venv
         const pythonPath = path.join(__dirname, '../venv/bin/python3')
@@ -1418,7 +1427,8 @@ function startPythonBackend(): void {
             '--log-level', 'error'
         ], {
             cwd: path.join(__dirname, '../'),
-            stdio: 'inherit'
+            stdio: 'inherit',
+            env
         })
     } else {
         // Production: Run bundled executable (PyInstaller)
@@ -1434,7 +1444,8 @@ function startPythonBackend(): void {
             // No CWD needed as PyInstaller handles paths internally usually, 
             // but setting it to the exe dir doesn't hurt.
             cwd: path.dirname(backendPath),
-            stdio: 'inherit'
+            stdio: 'inherit',
+            env
         })
     }
 

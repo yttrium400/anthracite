@@ -33,6 +33,7 @@ interface AppSettings {
     confirmBeforeClosingMultipleTabs: boolean;
     restoreTabsOnStartup: boolean;
     enableDevTools: boolean;
+    openaiApiKey?: string; // User's OpenAI API key for agent features
 }
 
 interface SettingsPageProps {
@@ -151,6 +152,8 @@ export function SettingsPage({ className }: SettingsPageProps) {
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [activeSection, setActiveSection] = useState<SettingsSection>('browser');
     const [isSaving, setIsSaving] = useState(false);
+    const [showApiKey, setShowApiKey] = useState(false);
+    const [apiKeyTestStatus, setApiKeyTestStatus] = useState<'success' | 'error' | 'testing' | null>(null);
 
     // Load settings on mount
     useEffect(() => {
@@ -213,6 +216,34 @@ export function SettingsPage({ className }: SettingsPageProps) {
     const handleBack = useCallback(() => {
         window.electron?.navigation.navigate('anthracite://newtab');
     }, []);
+
+    // Test API key
+    const testApiKey = useCallback(async () => {
+        if (!settings?.openaiApiKey) return;
+
+        setApiKeyTestStatus('testing');
+        try {
+            const response = await fetch('http://localhost:8000/test-api-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ api_key: settings.openaiApiKey }),
+            });
+
+            if (response.ok) {
+                setApiKeyTestStatus('success');
+                setTimeout(() => setApiKeyTestStatus(null), 3000);
+            } else {
+                setApiKeyTestStatus('error');
+                setTimeout(() => setApiKeyTestStatus(null), 5000);
+            }
+        } catch (error) {
+            console.error('Failed to test API key:', error);
+            setApiKeyTestStatus('error');
+            setTimeout(() => setApiKeyTestStatus(null), 5000);
+        }
+    }, [settings?.openaiApiKey]);
 
     if (!settings) {
         return (
@@ -632,6 +663,71 @@ export function SettingsPage({ className }: SettingsPageProps) {
                                         onChange={(v) => updateSetting('enableDevTools', v)}
                                     />
                                 </SettingRow>
+                            </div>
+
+                            {/* API Configuration */}
+                            <div className="mt-6 p-4 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+                                <h4 className="text-sm font-medium text-text-primary mb-2 flex items-center gap-2">
+                                    <Shield className="h-4 w-4" />
+                                    API Configuration
+                                </h4>
+                                <p className="text-xs text-text-tertiary mb-4">
+                                    Configure your OpenAI API key for agent features. Your key is stored securely and never shared.{' '}
+                                    <a
+                                        href="https://platform.openai.com/api-keys"
+                                        className="text-brand-light hover:text-brand transition-colors"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            window.open('https://platform.openai.com/api-keys');
+                                        }}
+                                    >
+                                        Get your API key →
+                                    </a>
+                                </p>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-xs text-text-secondary mb-1.5 block">
+                                            OpenAI API Key
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showApiKey ? 'text' : 'password'}
+                                                value={settings.openaiApiKey || ''}
+                                                onChange={(e) => updateSetting('openaiApiKey', e.target.value)}
+                                                placeholder="sk-..."
+                                                className="w-full px-3 py-2 pr-20 rounded-lg border border-white/[0.08] bg-white/[0.05] text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-brand/30 focus:border-brand/40 font-mono"
+                                            />
+                                            <button
+                                                onClick={() => setShowApiKey(!showApiKey)}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
+                                            >
+                                                {showApiKey ? 'Hide' : 'Show'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {apiKeyTestStatus && (
+                                        <div className={cn(
+                                            "flex items-start gap-2 px-3 py-2 rounded-lg text-xs",
+                                            apiKeyTestStatus === 'success' && "bg-success/10 text-success",
+                                            apiKeyTestStatus === 'error' && "bg-error/10 text-error",
+                                            apiKeyTestStatus === 'testing' && "bg-brand/10 text-brand-light"
+                                        )}>
+                                            {apiKeyTestStatus === 'testing' && <div className="loading-spinner w-3 h-3 mt-0.5" />}
+                                            <span>
+                                                {apiKeyTestStatus === 'success' && '✓ API key is valid'}
+                                                {apiKeyTestStatus === 'error' && '✗ Invalid API key or network error'}
+                                                {apiKeyTestStatus === 'testing' && 'Testing connection...'}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={testApiKey}
+                                        disabled={!settings.openaiApiKey || apiKeyTestStatus === 'testing'}
+                                        className="px-3 py-1.5 text-sm font-medium text-brand-light bg-brand/10 hover:bg-brand/15 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Test Connection
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="mt-6 p-4 bg-white/[0.03] rounded-xl border border-white/[0.06]">
