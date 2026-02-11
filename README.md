@@ -63,6 +63,39 @@ anthracite/
 └── CODE_OF_CONDUCT.md  # Community standards
 ```
 
+## Production Builds
+
+### Local Build
+To create a production build locally:
+```bash
+npm run build
+```
+
+Artifacts will be in the `dist/` directory:
+- **macOS**: `.dmg` and `.zip` files (arm64 + x64)
+- **Windows**: `.exe` NSIS installer
+- **Linux**: `.AppImage`
+
+### Automated Releases (CI/CD)
+
+The project uses GitHub Actions to automatically build and release for all platforms.
+
+**To trigger a release:**
+1. Create and push a git tag:
+   ```bash
+   git tag v0.1.0
+   git push origin v0.1.0
+   ```
+2. GitHub Actions will build for macOS, Windows, and Linux
+3. A new GitHub Release will be created with downloadable installers
+
+**Required GitHub Secrets** (optional for signing):
+- `CSC_LINK`, `CSC_KEY_PASSWORD` - macOS code signing certificate (base64-encoded .p12)
+- `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_SPECIFIC_PASSWORD` - for macOS notarization
+- `WIN_CSC_LINK`, `WIN_CSC_KEY_PASSWORD` - Windows code signing certificate
+
+Builds work without these secrets, but won't be signed.
+
 ## Community & Contributing
 
 We welcome contributions from the community!
@@ -74,3 +107,4 @@ We welcome contributions from the community!
 ## License
 
 MIT © Anthracite
+
