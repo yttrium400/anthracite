@@ -78,6 +78,12 @@ const WebviewController = React.memo(({ tab, isActive, lastWebUrl, onUpdate, onM
             }
         };
 
+        // Handle new window requests
+        const handleNewWindow = (e: any) => {
+            e.preventDefault();
+            window.electron?.tabs.create(e.url);
+        };
+
         // Add listeners
         element.addEventListener('did-navigate', handleNavigate);
         element.addEventListener('did-navigate-in-page', handleNavigateInPage);
@@ -86,6 +92,7 @@ const WebviewController = React.memo(({ tab, isActive, lastWebUrl, onUpdate, onM
         element.addEventListener('did-start-loading', handleStartLoading);
         element.addEventListener('did-stop-loading', handleStopLoading);
         element.addEventListener('ipc-message', handleIpcMessage);
+        element.addEventListener('new-window', handleNewWindow);
 
         // cleanup
         return () => {
@@ -96,6 +103,7 @@ const WebviewController = React.memo(({ tab, isActive, lastWebUrl, onUpdate, onM
             element.removeEventListener('did-start-loading', handleStartLoading);
             element.removeEventListener('did-stop-loading', handleStopLoading);
             element.removeEventListener('ipc-message', handleIpcMessage);
+            element.removeEventListener('new-window', handleNewWindow);
         };
     }, [tab.id, isActive, onUpdate, onMount, onSwipeWheel]);
 

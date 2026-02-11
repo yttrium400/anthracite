@@ -7,6 +7,38 @@ app.commandLine.appendSwitch('remote-debugging-port', String(CDP_PORT))
 import { spawn, ChildProcess } from 'node:child_process'
 import { ElectronBlocker, Request } from '@ghostery/adblocker-electron'
 import fetch from 'cross-fetch'
+
+
+
+app.on('web-contents-created', (_, contents) => {
+    // console.log('[App] web-contents-created', contents.id, contents.getType())
+
+    // Intercept window open requests from any web contents (including <webview>)
+    contents.setWindowOpenHandler((details) => {
+        // Check if this is a real navigation request
+        if (details.url && details.url !== 'about:blank') {
+
+            // Create tab via main process function
+            // We need to resolve the realm/dock from the source contents if possible,
+            // but for now let's just create it in the active context.
+            // Since we can't easily map contents -> tab ID here without a lookup,
+            // we'll let createTab handle default assignment.
+
+            // We need to ensure we don't block internal popups if any, but for a browser,
+            // almost all window.opens should be tabs.
+
+            // Use setImmediate to avoid blocking the handler
+            setImmediate(() => {
+                const tab = createTab(details.url)
+                switchToTab(tab.id)
+            })
+
+            return { action: 'deny' }
+        }
+        return { action: 'allow' }
+    })
+})
+
 import {
     addHistoryEntry,
     updateHistoryEntry,
@@ -162,8 +194,10 @@ function normalizeUrl(input: string): string {
     const internalPattern = /^poseidon:\/\//
     const aboutPattern = /^about:/
 
-    if (urlPattern.test(url) || localhostPattern.test(url) || internalPattern.test(url) || aboutPattern.test(url)) {
-        if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('poseidon://') && !url.startsWith('about:')) {
+    const filePattern = /^file:\/\//
+
+    if (urlPattern.test(url) || localhostPattern.test(url) || internalPattern.test(url) || aboutPattern.test(url) || filePattern.test(url)) {
+        if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('poseidon://') && !url.startsWith('about:') && !url.startsWith('file:')) {
             url = 'https://' + url
         }
         return url
@@ -314,9 +348,19 @@ function createTab(url: string = 'poseidon://newtab', options?: { realmId?: stri
     })
 
     // Handle new window requests (open in new tab)
-    view.webContents.setWindowOpenHandler(({ url }) => {
-        createTab(url)
-        switchToTab(tabs.get(Array.from(tabs.keys()).pop()!)!.id)
+    // This blocks new Electron windows and keeps everything in-app, maintaining Realm/Dock context.
+    view.webContents.setWindowOpenHandler((details) => {
+        console.log('[WindowOpen] Request:', details)
+        // Inherit parent's organization (Realm/Dock)
+        const parentOrg = getTabOrganization(id)
+
+        // Create new tab in the same context
+        const newTab = createTab(details.url, {
+            realmId: parentOrg?.realmId,
+            dockId: parentOrg?.dockId || undefined
+        })
+
+        switchToTab(newTab.id)
         return { action: 'deny' }
     })
 
