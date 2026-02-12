@@ -97,10 +97,10 @@ jobs:
         with:
           name: macos-build
           path: |
-            dist/*.dmg
-            dist/*.zip
-            dist/*.dmg.blockmap
-            dist/*.zip.blockmap
+            release/*.dmg
+            release/*.zip
+            release/*.dmg.blockmap
+            release/*.zip.blockmap
       
       - name: Upload artifacts (Windows)
         if: runner.os == 'Windows'
@@ -108,8 +108,8 @@ jobs:
         with:
           name: windows-build
           path: |
-            dist/*.exe
-            dist/*.exe.blockmap
+            release/*.exe
+            release/*.exe.blockmap
       
       - name: Upload artifacts (Linux)
         if: runner.os == 'Linux'
@@ -117,8 +117,8 @@ jobs:
         with:
           name: linux-build
           path: |
-            dist/*.AppImage
-            dist/*.AppImage.blockmap
+            release/*.AppImage
+            release/*.AppImage.blockmap
   
   release:
     name: Create GitHub Release
