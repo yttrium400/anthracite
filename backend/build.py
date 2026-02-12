@@ -60,7 +60,7 @@ def build_backend():
     cmd = (
         f"\"{venv_python}\" -m PyInstaller backend/server.py "
         f"--name anthracite-server "
-        f"--onedir "
+        f"--onefile "
         f"--noconsole "
         f"--clean "
         f"{hidden_imports} "
