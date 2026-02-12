@@ -155,7 +155,7 @@
         {
             "id": "21",
             "title": "Security Hardening — Pre-Release Critical",
-            "status": "completed",
+            "status": "pending",
             "priority": "critical",
             "context": "MUST be done before any public release or open-sourcing. The .env file currently contains an exposed OpenAI API key committed to git history. The Python backend has no auth or rate limiting.",
             "created_at": "2026-02-12T12:00:00.000000",
@@ -204,7 +204,7 @@
         {
             "id": "22",
             "title": "Production Desktop Builds (Mac + Windows + Linux)",
-            "status": "completed",
+            "status": "pending",
             "priority": "critical",
             "context": "electron-builder is installed (^24.9.1) and the build command exists in package.json, but there is NO platform-specific configuration. No code signing, no installer config, no auto-updater. Build resources exist at build/icon.png (512x512).",
             "created_at": "2026-02-12T12:01:00.000000",
@@ -255,7 +255,7 @@
         {
             "id": "23",
             "title": "CI/CD Pipeline — Automated Builds & Releases",
-            "status": "completed",
+            "status": "pending",
             "priority": "high",
             "context": "No GitHub Actions workflows exist for desktop builds. Website deploys via Vercel (already configured). Need automated multi-platform builds triggered on git tags.",
             "created_at": "2026-02-12T12:02:00.000000",
@@ -269,7 +269,7 @@
                 {
                     "id": "23.2",
                     "title": "Store code signing secrets in GitHub Secrets",
-                    "status": "completed",
+                    "status": "pending",
                     "context": "Mac: APPLE_ID, APPLE_TEAM_ID, CSC_LINK (base64 .p12), CSC_KEY_PASSWORD. Windows: WIN_CSC_LINK, WIN_CSC_KEY_PASSWORD."
                 },
                 {
