@@ -64,6 +64,19 @@ jobs:
           .\venv\Scripts\activate
           python backend/build.py
       
+      - name: Debug - List directory structure
+        run: |
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Repository root contents ==="
+          ls -la
+          echo "=== Build directory ==="
+          ls -la build/ || echo "build/ not found"
+          echo "=== Dist directory ==="
+          ls -la dist/ || echo "dist/ not found"
+          echo "=== Backend dist ==="
+          ls -la backend/dist/ || echo "backend/dist/ not found"
+      
       - name: Build Electron app
         run: npm run build
         env:
