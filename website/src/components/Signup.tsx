@@ -12,10 +12,34 @@ export default function Signup({ onBack }: Props) {
   const [role, setRole] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
-  const handleSubmit = (e: FormEvent) => {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (email.trim()) {
+    if (!email.trim()) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, role }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Something went wrong')
+      }
+
       setSubmitted(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to join waitlist')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -127,16 +151,29 @@ export default function Signup({ onBack }: Props) {
                   </div>
                 </div>
 
+                {/* Error Message */}
+                {error && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-red-400 text-xs mt-4 text-center"
+                  >
+                    {error}
+                  </motion.p>
+                )}
+
                 {/* Submit */}
                 <motion.button
                   type="submit"
-                  disabled={!isValid}
-                  className="group flex items-center justify-center gap-2 mt-12 px-5 py-2.5 rounded-xl border border-white/[0.10] text-sm text-text-secondary hover:border-white/[0.20] hover:text-text-primary disabled:opacity-30 disabled:hover:border-white/[0.10] disabled:hover:text-text-secondary transition-all duration-300"
-                  whileHover={isValid ? { scale: 1.02 } : {}}
-                  whileTap={isValid ? { scale: 0.98 } : {}}
+                  disabled={!isValid || loading}
+                  className="group flex items-center justify-center gap-2 mt-8 px-5 py-2.5 rounded-xl border border-white/[0.10] text-sm text-text-secondary hover:border-white/[0.20] hover:text-text-primary disabled:opacity-30 disabled:hover:border-white/[0.10] disabled:hover:text-text-secondary transition-all duration-300"
+                  whileHover={isValid && !loading ? { scale: 1.02 } : {}}
+                  whileTap={isValid && !loading ? { scale: 0.98 } : {}}
                 >
-                  <span className="font-light">Submit</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-text-tertiary group-hover:text-text-secondary transition-colors duration-300" />
+                  <span className="font-light">{loading ? 'Joining...' : 'Submit'}</span>
+                  {!loading && (
+                    <ArrowRight className="h-3.5 w-3.5 text-text-tertiary group-hover:text-text-secondary transition-colors duration-300" />
+                  )}
                 </motion.button>
               </motion.form>
             )}
