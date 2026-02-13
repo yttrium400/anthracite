@@ -6,7 +6,11 @@
 
 // @ts-ignore
 // Side-effect import to inject cosmetic filters (requires sandbox: false or bundling)
-require('@ghostery/adblocker-electron-preload')
+try {
+    require('@ghostery/adblocker-electron-preload')
+} catch (e) {
+    // Adblocker might be disabled or module missing
+}
 import { ipcRenderer } from 'electron'
 
 let lastSendTime = 0

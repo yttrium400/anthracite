@@ -26,6 +26,7 @@ interface TopBarProps {
     canGoBack?: boolean;
     canGoForward?: boolean;
     isLoading?: boolean;
+    onNavigate?: (url: string) => void;
 }
 
 // ... existing interfaces ...
@@ -58,7 +59,8 @@ export function TopBar({
     onReload,
     canGoBack,
     canGoForward,
-    isLoading
+    isLoading,
+    onNavigate
 }: TopBarProps) {
     const [activeTab, setActiveTab] = useState<ActiveTab | null>(null);
     const [inputValue, setInputValue] = useState('');
@@ -207,7 +209,7 @@ export function TopBar({
 
         debounceRef.current = setTimeout(() => {
             fetchSuggestions(value);
-        }, 100); // Fast debounce for responsive feel
+        }, 300); // 300ms debounce to prevent blocking main process with history search
     };
 
     const handleNavigate = (e: React.FormEvent) => {
@@ -217,8 +219,14 @@ export function TopBar({
 
             const input = inputValue.trim();
 
-            // Send raw input to main process - let it handle normalization and search engine selection
-            window.electron.navigation.navigate(input);
+            // Optimistic update & Navigation
+            if (onNavigate) {
+                onNavigate(input);
+            } else {
+                // Fallback if no handler provided (shouldn't happen in App)
+                window.electron.navigation.navigate(input);
+            }
+
             setIsEditing(false);
             inputRef.current?.blur();
         }
@@ -230,11 +238,21 @@ export function TopBar({
         if (suggestion.type === 'history' && suggestion.url) {
             // Navigate directly to URL from history
             setInputValue(suggestion.url);
-            window.electron?.navigation.navigate(suggestion.url);
+
+            if (onNavigate) {
+                onNavigate(suggestion.url);
+            } else {
+                window.electron?.navigation.navigate(suggestion.url);
+            }
         } else {
             // Search suggestion - let main process handle the search
             setInputValue(suggestion.title);
-            window.electron?.navigation.navigate(suggestion.title);
+
+            if (onNavigate) {
+                onNavigate(suggestion.title);
+            } else {
+                window.electron?.navigation.navigate(suggestion.title);
+            }
         }
 
         setIsEditing(false);
@@ -464,7 +482,7 @@ export function TopBar({
                 >
                     {/* Icon */}
                     <div className="flex items-center justify-center w-9 h-full shrink-0">
-                        {activeTab?.isLoading ? (
+                        {isLoading ? (
                             <Loader2 className="h-4 w-4 text-brand animate-spin" />
                         ) : isSecure ? (
                             <Lock className="h-3.5 w-3.5 text-success" />

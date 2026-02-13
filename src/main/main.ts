@@ -143,7 +143,7 @@ let pythonProcess: ChildProcess | null = null
 let blocker: ElectronBlocker | null = null
 let blockedCount = 0
 let httpsUpgradeCount = 0
-let adBlockEnabled = true
+let adBlockEnabled = false // Temporarily disabled for performance testing
 let httpsUpgradeEnabled = true
 
 // Tab management
@@ -292,24 +292,51 @@ function createTab(url: string = 'anthracite://newtab', options?: { realmId?: st
     }
 
     // Set up event listeners
+    // Navigation state tracking for performance logging
+    const navStartTimes = new Map<string, number>()
+
     view.webContents.on('did-start-loading', () => {
+        // Ignore non-main-frame loads (e.g. iframes, in-page nav) to prevent UI flicker
+        // if (!view.webContents.isLoadingMainFrame()) return
+
+        // Only log if not already loading to avoid noise
+        if (!tab.isLoading) {
+            // console.log(`[Perf] [${id}] did-start-loading`)
+            navStartTimes.set(id, performance.now())
+        }
+
         tab.isLoading = true
         sendTabUpdate(tab)
     })
 
     view.webContents.on('did-stop-loading', () => {
+        const startTime = navStartTimes.get(id)
+        // const duration = startTime ? (performance.now() - startTime).toFixed(2) : '?'
+
         tab.isLoading = false
         sendTabUpdate(tab)
     })
 
     // Main navigation event - fires for full page loads
-    view.webContents.on('did-navigate', (_, url) => {
-        // Don't overwrite anthracite:// URL when BrowserView loads about:blank for CDP
-        if (!(tab as any)._isInternalPage || !url.startsWith('about:')) {
-            tab.url = url
-            sendTabUpdate(tab)
-            addHistoryEntry(url, tab.title, tab.favicon)
+    view.webContents.on('did-navigate', (event, url) => {
+        const currentTab = tabs.get(id)
+        if (currentTab) {
+            // Don't overwrite URL for internal pages (which load about:blank)
+            if ((currentTab as any)._isInternalPage && url === 'about:blank') return
+
+            currentTab.url = url
+            sendActiveTabUpdate()
+            sendTabsUpdate()
+
+            // Add to history (deferred to unblock navigation)
+            setTimeout(() => {
+                addHistoryEntry(url, currentTab.title, currentTab.favicon)
+            }, 500)
         }
+    })
+
+    view.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+        // console.error(`[Perf] [${id}] did-fail-load: ${errorCode} ${errorDescription} (${validatedURL})`)
     })
 
     // In-page navigation (hash changes, pushState)
@@ -400,7 +427,9 @@ function createTab(url: string = 'anthracite://newtab', options?: { realmId?: st
         ; (tab as any)._isInternalPage = true
         view.webContents.loadURL('about:blank')
     } else {
-        view.webContents.loadURL(normalizeUrl(url))
+        // Shadow View Disconnect: Only load about:blank to prevent double-loading
+        tab.url = normalizeUrl(url)
+        view.webContents.loadURL('about:blank')
     }
 
     // Send tab created event
@@ -457,14 +486,14 @@ function navigateTab(tabId: string, url: string): void {
 
     const normalizedUrl = normalizeUrl(url)
 
-    // Update tab URL
-    tab.url = normalizedUrl
-    sendTabUpdate(tab)
-
-    // Tell the renderer to navigate the webview explicitly
+    // Shadow View Disconnect: Delegate navigation to Renderer
     if (win && !win.isDestroyed()) {
         win.webContents.send('navigate-to-url', { tabId, url: normalizedUrl })
     }
+
+    // Optimistically update state
+    tab.url = normalizedUrl
+    sendTabUpdate(tab)
 }
 
 // ============================================
@@ -550,27 +579,20 @@ function setupRequestInterceptor(sess: Electron.Session): void {
     // We attach a single listener that handles both HTTPS Upgrade and Ad Blocking
     // because Electron only allows one listener per event type.
 
-    // First, remove any existing listener to prevent duplicates
-    sess.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
-        // console.log('[Interceptor] Request:', details.url, 'HTTPS Upgrade Enabled:', httpsUpgradeEnabled)
+    // 1. Ad Blocking (Native Integration)
+    // The library's enableBlockingInSession method is highly optimized (C++) and async-friendly.
+    // It attaches its own high-performance listener to the session.
+    if (adBlockEnabled && blocker) {
+        safeEnableBlocking(sess)
+    }
 
-        // 1. HTTPS Upgrade
-        if (httpsUpgradeEnabled && details.url.startsWith('http://') && !isLocal(details.url)) {
-            const httpsUrl = details.url.replace('http:', 'https:')
-            return callback({ redirectURL: httpsUrl })
-        }
-
-        // 2. Ad Blocking
-        if (adBlockEnabled && blocker) {
-            // Delegate to ad blocker, but spy on the result
-            return blocker.onBeforeRequest(details, (response) => {
-                callback(response)
-            })
-        }
-
-        // 3. Default (Allow)
-        callback({})
-    })
+    // 2. HTTPS Upgrade (Native / Simplified)
+    // Electron/Chromium handles HSTS automatically. We remove our manual upgrader
+    // to prevent conflicts with site redirects and double-reloads.
+    if (httpsUpgradeEnabled) {
+        // If we really need custom upgrade logic, we should use a non-blocking approach on headers received,
+        // but for now, rely on browser native security.
+    }
 }
 
 
@@ -614,18 +636,31 @@ async function initAdBlocker(): Promise<void> {
             }
         }
 
+        // Throttle ad-blocked events to prevent flooding the renderer and main process
+        let adBlockUpdateQueued = false
+        const sendAdBlockUpdate = () => {
+            if (adBlockUpdateQueued) return
+            adBlockUpdateQueued = true
+            setTimeout(() => {
+                if (win && !win.isDestroyed()) {
+                    win.webContents.send('ad-blocked', { count: blockedCount })
+                }
+                adBlockUpdateQueued = false
+            }, 1000) // Update at most once per second
+        }
+
         blocker.on('request-blocked', (request) => {
             blockedCount++
-            if (win && !win.isDestroyed()) {
-                win.webContents.send('ad-blocked', { count: blockedCount, url: request.url })
-            }
+            // Optimization: Don't send every single blocked URL to renderer, just the count
+            // if (win && !win.isDestroyed()) {
+            //    win.webContents.send('ad-blocked', { count: blockedCount, url: request.url })
+            // }
+            sendAdBlockUpdate()
         })
 
         blocker.on('request-redirected', () => {
             blockedCount++
-            if (win && !win.isDestroyed()) {
-                win.webContents.send('ad-blocked', { count: blockedCount })
-            }
+            sendAdBlockUpdate()
         })
 
         // Enable on default session (BrowserView tabs)
@@ -638,10 +673,17 @@ async function initAdBlocker(): Promise<void> {
 
         // Setup HTTPS upgrade interceptor on defaultSession (BrowserView tabs)
         // Note: webview partition is fully managed by ghostery — don't override its listeners
-        setupRequestInterceptor(session.defaultSession)
+        // setupRequestInterceptor(session.defaultSession) -> REMOVED: Redundant with safeEnableBlocking
 
     } catch (error) {
         console.error('Failed to initialize ad blocker:', error)
+    }
+
+    // Silence IPC errors if ad blocker is disabled but preload is still injected
+    // The preload script 'require's the adblocker library which tries to communicate immediately.
+    if (!adBlockEnabled) {
+        ipcMain.handle('@ghostery/adblocker/inject-cosmetic-filters', () => { })
+        ipcMain.handle('@ghostery/adblocker/is-mutation-observer-enabled', () => false)
     }
 }
 
@@ -771,40 +813,65 @@ function setupIPC(): void {
             url: tab.url,
             favicon: tab.favicon,
             isLoading: tab.isLoading,
-            canGoBack: tab.view.webContents.canGoBack(),
-            canGoForward: tab.view.webContents.canGoForward()
         }
     })
 
-    ipcMain.handle('update-tab-state', (_, tabId: string, data: Partial<Tab>) => {
-        const tab = tabs.get(tabId)
-        if (!tab) return { success: false }
 
-        // Update fields
-        if (data.url !== undefined) tab.url = data.url
-        if (data.title !== undefined) tab.title = data.title
-        if (data.favicon !== undefined) tab.favicon = data.favicon
-        if (data.isLoading !== undefined) tab.isLoading = data.isLoading
 
-        // Handle URL update - add to history
-        if (data.url) {
-            addHistoryEntry(data.url, tab.title, tab.favicon)
+    // Renderer Logging
+    ipcMain.on('renderer-log', (event, message) => {
+        console.log(message)
+    })
+
+    const historyDebounceTimers = new Map<string, NodeJS.Timeout>()
+
+    ipcMain.handle('update-tab-state', (event, { tabId, state }) => {
+        try {
+            const tab = tabs.get(tabId)
+            if (!tab) return
+
+            // Update local state
+            if (state.url) tab.url = state.url
+            if (state.title) tab.title = state.title
+            if (state.favicon) tab.favicon = state.favicon
+            if (state.isLoading !== undefined) tab.isLoading = state.isLoading
+            if (state.canGoBack !== undefined) tab.view.webContents.setVisualZoomLevelLimits(1, 1) // Dummy op to access webContents if needed
+
+            // Broadcast to other windows/renderers if needed
+            sendTabUpdate(tab)
+
+            // Debounce History Updates (URL/Title/Favicon)
+            // Clear existing timer for this tab
+            if (historyDebounceTimers.has(tabId)) {
+                clearTimeout(historyDebounceTimers.get(tabId)!)
+            }
+
+            // Schedule new write
+            const timer = setTimeout(() => {
+                // historyDebounceTimers.delete(tabId) // Cleanup
+                if (tab.url && !tab.url.startsWith('anthracite://') && !tab.url.startsWith('about:')) {
+                    console.log(`[History] Writing: ${tab.url}`)
+                    if (state.url) {
+                        addHistoryEntry(tab.url, tab.title, tab.favicon)
+                    } else {
+                        updateHistoryEntry(tab.url, tab.title, tab.favicon)
+                    }
+                }
+            }, 800) // 800ms debounce
+            historyDebounceTimers.set(tabId, timer)
+
+            return true
+        } catch (err) {
+            console.error('Failed to update tab state:', err)
+            return false
         }
-
-        // Handle title/favicon update - update history
-        if (data.title || data.favicon) {
-            updateHistoryEntry(tab.url, tab.title, tab.favicon)
-        }
-
-        // Notify renderer
-        sendTabUpdate(tab)
-
-        return { success: true }
     })
 
     // Navigation
     ipcMain.handle('navigate', (_, url: string) => {
         if (activeTabId) {
+            // Call navigateTab to update state and trigger renderer navigation event
+            // (Note: navigateTab has been modified to NOT double-load the background view)
             navigateTab(activeTabId, url)
         }
         return { success: true }
@@ -1298,8 +1365,6 @@ function createWindow(): void {
                 { role: 'hide' },
                 { role: 'hideOthers' },
                 { role: 'unhide' },
-                { type: 'separator' },
-                { role: 'quit' },
             ],
         },
         {

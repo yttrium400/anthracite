@@ -893,6 +893,40 @@
                     "status": "pending"
                 }
             ]
+        },
+        {
+            "id": "39",
+            "title": "Fix Search Latency & Double-Reload Issues",
+            "status": "pending",
+            "priority": "high",
+            "context": "User reports significant delay (3s+) when searching from an existing tab, followed by a double-reload where the page loads twice. This is likely caused by conflict between our `did-navigate` handlers, the `setWindowOpenHandler`, or the ad-blocker/HTTPS-upgrade interceptors.",
+            "created_at": "2026-02-13T08:20:00.000000",
+            "subtasks": [
+                {
+                    "id": "39.1",
+                    "title": "Investigate 'did-navigate' vs 'did-finish-load' handlers in main.ts",
+                    "status": "pending",
+                    "context": "We might be triggering a reload or a second navigation when the first one completes."
+                },
+                {
+                    "id": "39.2",
+                    "title": "Check HTTPS Upgrade Interceptor",
+                    "status": "pending",
+                    "context": "The interceptor in main.ts (line 558) redirects HTTP to HTTPS. If Google redirects HTTP -> HTTPS itself, we might be fighting it, causing a double load."
+                },
+                {
+                    "id": "39.3",
+                    "title": "Analyze Ad-Blocker Request Interception",
+                    "status": "pending",
+                    "context": "Detailed request logging needed to see if the blocker is holding up the request processing for seconds."
+                },
+                {
+                    "id": "39.4",
+                    "title": "Optimize Search URL Construction",
+                    "status": "pending",
+                    "context": "Ensure we aren't loading a redirect page that then loads the actual results."
+                }
+            ]
         }
     ]
 }

@@ -42,15 +42,16 @@
     "extraResources": [
       {
         "from": "backend/dist/anthracite-server",
-        "to": "backend/anthracite-server",
+        "to": "anthracite-server",
         "filter": [
-          "!**/*.spec"
+          "**/*"
         ]
       },
       {
         "from": "backend/dist/anthracite-server.exe",
         "to": "backend/anthracite-server.exe"
-      }
+      },
+      "package.json"
     ],
     "mac": {
       "icon": "build/icon.png",

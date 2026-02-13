@@ -63,7 +63,11 @@ const WebviewController = React.memo(({ tab, isActive, lastWebUrl, onUpdate, onM
                 onUpdate(tab.id, { favicon: e.favicons[0] });
             }
         };
-        const handleStartLoading = () => onUpdate(tab.id, { isLoading: true });
+
+        const handleStartLoading = () => {
+            onUpdate(tab.id, { isLoading: true });
+        }
+
         const handleStopLoading = () => {
             onUpdate(tab.id, { isLoading: false });
             checkNavigationState();
@@ -107,24 +111,24 @@ const WebviewController = React.memo(({ tab, isActive, lastWebUrl, onUpdate, onM
         };
     }, [tab.id, isActive, onUpdate, onMount, onSwipeWheel]);
 
-    // Determine the URL for the webview.
+    // Determine the initial URL for the webview.
     // If on an internal page but we have a lastWebUrl, keep using that to preserve history.
     // Otherwise, use about:blank for internal pages.
     const isInternalUrl = tab.url.startsWith('anthracite://');
-    const webviewSrc = isInternalUrl
+    const initialSrc = useRef(isInternalUrl
         ? (lastWebUrl || 'about:blank') // Preserve last web URL for history, fallback to about:blank
-        : tab.url;
+        : tab.url);
 
     return (
         <div
             className={cn(
-                "absolute inset-0 bg-[#0A0A0B]",
-                isActive ? "z-10" : "z-0 pointer-events-none opacity-0"
+                "absolute inset-0 bg-[#0A0A0B]", // Reverted to app background color
+                isActive ? "z-10 opacity-100" : "z-0 pointer-events-none opacity-0"
             )}
         >
             <webview
                 ref={webviewRef}
-                src={webviewSrc}
+                src={initialSrc.current}
                 className="h-full w-full"
                 webpreferences="contextIsolation=yes, nodeIntegration=no"
                 partition="persist:anthracite"
@@ -465,6 +469,15 @@ function App() {
                 canGoBack={activeTab?.canGoBack || (!!activeTabId && !isHomePage && tabsWithWebview.has(activeTabId))}
                 canGoForward={activeTab?.canGoForward || (isHomePage && !!activeTabId && tabsWithWebview.has(activeTabId))}
                 isLoading={activeTab?.isLoading}
+                onNavigate={(url) => {
+                    // Optimistically set loading state
+                    if (activeTabId) {
+                        // Set loading true immediately
+                        handleTabUpdate(activeTabId, { isLoading: true });
+                        // Execute navigation
+                        handleNavigate(url);
+                    }
+                }}
             />
 
             {/* Floating Sidebar - z-index ensures it's above webview */}

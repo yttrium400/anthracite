@@ -23,7 +23,7 @@ interface ActiveTabInfo extends TabInfo {
 
 contextBridge.exposeInMainWorld('electron', {
     // Generic IPC
-    // Generic IPC - REMOVED for security
+    log: (message: string) => ipcRenderer.send('renderer-log', message),
     // ipcRenderer: { ... }
 
 
